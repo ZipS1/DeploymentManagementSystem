@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace DeploymentManagementSystem.Data.Models
+﻿namespace DeploymentManagementSystem.Data.Models
 {
     public class WorkLog
     {
@@ -8,9 +6,9 @@ namespace DeploymentManagementSystem.Data.Models
         public DateTime Date { get; set; }
         public decimal TimeSpent { get; set; }
         public int TaskId { get; set; }
-        public int UserId { get; set; }
+        public string UserId { get; set; }
 
         public Task? Task { get; set; }
-        public IdentityUser? User { get; set; }
+        public ApplicationUser? User { get; set; }
     }
 }

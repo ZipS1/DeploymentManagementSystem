@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace DeploymentManagementSystem.Data.Models
+﻿namespace DeploymentManagementSystem.Data.Models
 {
     public class Task
     {
@@ -18,7 +16,7 @@ namespace DeploymentManagementSystem.Data.Models
         public TaskStatus? TaskStatus { get; set; }
         public TaskType? TaskType { get; set; }
         public Project? Project { get; set; }
-        public IdentityUser? AssignedUser { get; set; }
-        public IdentityUser? CreatorUser { get; set; }
+        public ApplicationUser? AssignedUser { get; set; }
+        public ApplicationUser? CreatorUser { get; set; }
     }
 }

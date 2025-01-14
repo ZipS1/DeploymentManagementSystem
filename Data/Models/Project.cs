@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace DeploymentManagementSystem.Data.Models
+﻿namespace DeploymentManagementSystem.Data.Models
 {
     public class Project
     {
@@ -12,6 +10,6 @@ namespace DeploymentManagementSystem.Data.Models
         public string? GitlabUrl { get; set; }
         public string ProjectManagerId { get; set; }
 
-        public IdentityUser? ProjectManager { get; set; }
+        public ApplicationUser? ProjectManager { get; set; }
     }
 }
