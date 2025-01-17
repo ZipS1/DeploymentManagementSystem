@@ -48,7 +48,8 @@ namespace DeploymentManagementSystem.Data
                 NormalizedUserName = "ROOT@MAIL.COM",
                 Lastname = "root",
                 Name = "root",
-                Patronymic = "root"
+                Patronymic = "root",
+                Role = "Admin",
             };
 
             await userManager.CreateAsync(rootUser);
