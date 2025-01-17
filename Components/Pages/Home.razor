@@ -8,13 +8,31 @@
 
 <PageTitle>Home</PageTitle>
 
-@if (user is null) {
-	<p>Loading...</p>
-} else if (!user.IsDataFullfilled) {
-	<p>Please fullfill your <a href="Account/Manage">profile</a> first</p>
-} else {
-	<p>Hello, @user.Lastname @user.Name @user.Patronymic</p>
-}
+<AuthorizeView Roles="NewUser,Developer,LeadDeveloper,ProjectManager">
+	@if (user is null) {
+		<p>Loading...</p>
+	} else if (!user.IsDataFullfilled) {
+		<p>Please fullfill your <a href="Account/Manage">profile</a> first</p>
+	} else {
+		<p>Hello, @user.Lastname @user.Name @user.Patronymic</p>
+	}
+</AuthorizeView>
+
+<AuthorizeView Roles="NewUser">
+	<p>You are a new user, ask project manager to give you a role in system</p>
+</AuthorizeView>
+<AuthorizeView Roles="Admin">
+	<p>You are a superadmin</p>
+</AuthorizeView>
+<AuthorizeView Roles="ProjectManager">
+	<p>You are a project manager</p>
+</AuthorizeView>
+<AuthorizeView Roles="LeadDeveloper">
+	<p>You are a lead developer</p>
+</AuthorizeView>
+<AuthorizeView Roles="Developer">
+	<p>You are a developer</p>
+</AuthorizeView>
 
 @code {
 	private ApplicationUser user = default!;
