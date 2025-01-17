@@ -62,6 +62,28 @@ namespace DeploymentManagementSystem.Data.Configurations
                 .HasConstraintName($"fk_f_{ModelName}_project_manager_id")
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasMany(p => p.Participants)
+                   .WithMany(p => p.Projects)
+                   .UsingEntity<Dictionary<string, object>>(
+                    "cd_project_user",
+                    j => j
+                        .HasOne<ApplicationUser>()
+                        .WithMany()
+                        .HasForeignKey("user_id")
+                        .HasConstraintName($"fk_f_{ModelName}_user_id")
+                        .OnDelete(DeleteBehavior.Cascade),
+                    j => j
+                        .HasOne<Project>()
+                        .WithMany()
+                        .HasForeignKey("project_id")
+                        .HasConstraintName($"fk_f_{ModelName}_project_id")
+                        .OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.HasKey("user_id", "project_id");
+                        j.ToTable("cd_project_user");
+                    });
+
             builder.HasIndex(p => p.ProjectManagerId, $"idx_{TableName}_fk_f_{ModelName}_project_manager_id");
         }
     }

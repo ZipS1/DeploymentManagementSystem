@@ -11,5 +11,6 @@
         public string ProjectManagerId { get; set; }
 
         public ApplicationUser? ProjectManager { get; set; }
+        public ICollection<ApplicationUser>? Participants { get; set; }
     }
 }
