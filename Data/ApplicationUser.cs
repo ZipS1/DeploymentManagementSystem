@@ -6,6 +6,11 @@ namespace DeploymentManagementSystem.Data
     // Add profile data for application users by adding properties to the ApplicationUser class
     public class ApplicationUser : IdentityUser
     {
+        public string? Lastname { get; set; }
+        public string? Name { get; set; }
+        public string? Patronymic { get; set; }
+        public bool IsDataFullfilled { get; set; } = false;
+
         public ICollection<Project>? Projects { get; set; }
     }
 

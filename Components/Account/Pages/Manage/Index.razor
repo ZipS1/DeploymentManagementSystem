@@ -12,6 +12,15 @@
 <PageTitle>Profile</PageTitle>
 
 <h3>Profile</h3>
+@if (user is not null)
+{
+    if (IsAccountFullfilled())
+    {
+        <p>Filled</p>
+    } else {
+        <p>Not filled</p>
+    }
+}
 <StatusMessage />
 
 <div class="row">
@@ -24,9 +33,24 @@
                 <label for="username" class="form-label">Username</label>
             </div>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." hidden />
                 <label for="phone-number" class="form-label">Phone number</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Lastname" class="form-control" placeholder="Please enter your lastname." />
+                <label for="lastname" class="form-label">Lastname</label>
+                <ValidationMessage For="() => Input.Lastname" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Name" class="form-control" placeholder="Please enter your name." />
+                <label for="name" class="form-label">Name</label>
+                <ValidationMessage For="() => Input.Name" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Patronymic" class="form-control" placeholder="Please enter your patronymic." />
+                <label for="patronymic" class="form-label">Patronymic</label>
+                <ValidationMessage For="() => Input.Patronymic" class="text-danger" />
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </EditForm>
@@ -37,6 +61,13 @@
     private ApplicationUser user = default!;
     private string? username;
     private string? phoneNumber;
+    private string? lastname;
+    private string? name;
+    private string? patronymic;
+
+    private bool isDataChanged = false;
+
+    private const string PhoneNumberPlaceholder = "+21231231212";
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -49,8 +80,14 @@
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+        lastname = user.Lastname;
+        name = user.Name;
+        patronymic = user.Patronymic;
 
-        Input.PhoneNumber ??= phoneNumber;
+        Input.PhoneNumber ??= PhoneNumberPlaceholder;
+        Input.Lastname ??= lastname;
+        Input.Name ??= name;
+        Input.Patronymic ??= patronymic;
     }
 
     private async Task OnValidSubmitAsync()
@@ -64,14 +101,57 @@
             }
         }
 
+        if (Input.Lastname != lastname)
+        {
+            user.Lastname = Input.Lastname;
+            isDataChanged = true;
+        }
+
+        if (Input.Name != name)
+        {
+            user.Name = Input.Name;
+            isDataChanged = true;
+        }
+
+        if (Input.Patronymic != patronymic)
+        {
+            user.Patronymic = Input.Patronymic;
+            isDataChanged = true;
+        }
+
+        if (isDataChanged)
+        {
+            if (IsAccountFullfilled())
+            {
+                user.IsDataFullfilled = true;
+            }
+
+            var setNameResult = await UserManager.UpdateAsync(user);
+            if (!setNameResult.Succeeded)
+            {
+                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set new name.", HttpContext);
+            }
+        }
+
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
     }
+
+    private bool IsAccountFullfilled() => user.Lastname is not null && user.Name is not null && user.Patronymic is not null;
 
     private sealed class InputModel
     {
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
+
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Length must be between 3 and 100")]
+        public string? Lastname { get; set; }
+
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Length must be between 3 and 100")]
+        public string? Name { get; set; }
+
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "Length must be between 3 and 100")]
+        public string? Patronymic { get; set; }
     }
 }
