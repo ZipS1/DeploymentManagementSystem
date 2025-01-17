@@ -27,7 +27,6 @@
     <div class="col-md-6">
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
                 <label for="username" class="form-label">Username</label>
@@ -145,13 +144,14 @@
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
 
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Length must be between 3 and 100")]
+        [StringLength(99, ErrorMessage = "Length must less than 100")]
         public string? Lastname { get; set; }
 
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Length must be between 3 and 100")]
+        [RegularExpression("^(?!root$).*$", ErrorMessage = "The value cannot be 'root'")]
+        [StringLength(99, ErrorMessage = "Length must less than 100")]
         public string? Name { get; set; }
 
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Length must be between 3 and 100")]
+        [StringLength(99, ErrorMessage = "Length must less than 100")]
         public string? Patronymic { get; set; }
     }
 }
