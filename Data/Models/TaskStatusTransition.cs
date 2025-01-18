@@ -6,6 +6,7 @@
         public int TaskTypeId { get; set; }
         public int FromTaskStatusId { get; set; }
         public int ToTaskStatusId { get; set; }
+        public required string AllowedRoles { get; set; }
 
         public TaskType? TaskType { get; set; }
         public TaskStatus? FromTaskStatus { get; set; }
