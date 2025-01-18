@@ -1,11 +1,15 @@
 ﻿@page "/projects/details"
+@rendermode InteractiveServer
+
 @using DeploymentManagementSystem.Data
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using DeploymentManagementSystem.Data.Models
 
 @attribute [Authorize(Roles = "Admin,ProjectManager")]
-@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 
 <PageTitle>Project</PageTitle>
@@ -46,8 +50,7 @@
     }
 </div>
 
-<br /><br />
-<h3>Participants</h3>
+<h3 class="mt-lg-3">Participants</h3>
 
 @if (Participants == null)
 {
@@ -67,6 +70,7 @@ else
                 <th>Name</th>
                 <th>Patronymic</th>
                 <th>Role</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -78,15 +82,27 @@ else
                     <td>@user.Name</td>
                     <td>@user.Patronymic</td>
                     <td>@user.Role</td>
+                    <td>
+                        @if (user.Id == currentUserId)
+                        {
+                            <button class="btn btn-danger" @onclick="() => OnExcludeFromProjectButtonClick(user)" disabled>Exclude from project</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-danger" @onclick="() => OnExcludeFromProjectButtonClick(user)">Exclude from project</button>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
+    <a href=@($"/AddUserToProject?id={project!.Id}") class="btn btn-primary mt-4">Add users to project</a>
 }
 
 @code {
     private Project? project;
     private List<ApplicationUser> Participants = new();
+    private string? currentUserId;
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -99,11 +115,29 @@ else
                                     .Include(p => p.Participants)
                                     .FirstOrDefaultAsync(m => m.Id == Id);
 
-        Participants.AddRange(project!.Participants!);
-
         if (project is null)
         {
             NavigationManager.NavigateTo("notfound");
         }
+
+        Participants.AddRange(project!.Participants!);
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+    }
+
+    private void OnExcludeFromProjectButtonClick(ApplicationUser user)
+    {
+        using var context = DbFactory.CreateDbContext();
+        var participants = context!.Projects.Include(p => p.Participants).FirstOrDefault(p => p.Id == project!.Id)!.Participants!;
+        ApplicationUser userToRemove = participants.FirstOrDefault(p => p.Id == user.Id)!;
+        context!.Projects.Include(p => p.Participants).FirstOrDefault(p => p.Id == project!.Id)!.Participants!.Remove(userToRemove);
+        context.SaveChanges();
+        Participants.Remove(user);
+        StateHasChanged();
     }
 }

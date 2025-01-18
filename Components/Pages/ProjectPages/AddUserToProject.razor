@@ -1,0 +1,89 @@
+﻿@page "/AddUserToProject"
+@rendermode InteractiveServer
+
+@using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
+@inject UserManager<ApplicationUser> UserManager
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<h3>Add user to project</h3>
+
+<h3>User List</h3>
+
+@if (Users == null)
+{
+    <p>Loading...</p>
+}
+else if (Users.Count == 0)
+{
+    <p>No users found.</p>
+}
+else
+{
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Lastname</th>
+                <th>Name</th>
+                <th>Patronymic</th>
+                <th>Role</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.Lastname</td>
+                    <td>@user.Name</td>
+                    <td>@user.Patronymic</td>
+                    <td>@user.Role</td>
+                    @if (Participants.Any(p => p.Id == user.Id))
+                    {
+                        <td><button class="btn btn-primary" disabled>Already in project</button></td>
+                    }
+                    else
+                    {
+                        <td><button class="btn btn-primary" @onclick="() => OnAddToProjectButtonClick(user)">Add to project</button></td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <a href="@($"/projects/details?id={Id}")">Back to Project</a>
+}
+
+@code {
+    private List<ApplicationUser> Users = new();
+    private List<ApplicationUser> Participants = new();
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Users = UserManager.Users.Where(u => u.Role != "Admin" && u.Role != "NewUser").ToList();
+        Participants = context.Projects
+                                    .Include(p => p.Participants)
+                                    .FirstOrDefault(p => p.Id == Id)!.Participants!
+                                    .ToList();
+    }
+
+    private void OnAddToProjectButtonClick(ApplicationUser user)
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(user);
+        context.Projects.Include(p => p.Participants).FirstOrDefault(p => p.Id == Id)!.Participants!.Add(user);
+        context.SaveChanges();
+        Participants.Add(user);
+        StateHasChanged();
+    }
+}
