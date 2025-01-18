@@ -1,4 +1,5 @@
 ﻿@page "/projects/details"
+@using DeploymentManagementSystem.Data
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using DeploymentManagementSystem.Data.Models
@@ -45,8 +46,47 @@
     }
 </div>
 
+<br /><br />
+<h3>Participants</h3>
+
+@if (Participants == null)
+{
+    <p>Loading...</p>
+}
+else if (Participants.Count == 0)
+{
+    <p>No participants found.</p>
+}
+else
+{
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Lastname</th>
+                <th>Name</th>
+                <th>Patronymic</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Participants)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.Lastname</td>
+                    <td>@user.Name</td>
+                    <td>@user.Patronymic</td>
+                    <td>@user.Role</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
 @code {
     private Project? project;
+    private List<ApplicationUser> Participants = new();
 
     [SupplyParameterFromQuery]
     private int Id { get; set; }
@@ -58,6 +98,8 @@
                                     .Include(p => p.ProjectManager)
                                     .Include(p => p.Participants)
                                     .FirstOrDefaultAsync(m => m.Id == Id);
+
+        Participants.AddRange(project!.Participants!);
 
         if (project is null)
         {

@@ -40,7 +40,7 @@
             </div>
             <div class="mb-3">
                 <label for="isenddateenabled" class="form-label">EndDate:</label>
-                <InputCheckbox id="isenddateenabled" @bind-Value="isEndDateEnabled"></InputCheckbox>
+                <InputCheckbox id="isenddateenabled" @bind-Value="isEndDateEnabled" @bind-Value:after="() => OnEndDateChange()"></InputCheckbox>
             </div>
             @if (isEndDateEnabled)
             {
@@ -107,9 +107,26 @@
             Project.EndDate = null;
         }
 
+        ApplicationUser projectManager = (await UserManager.Users.FirstOrDefaultAsync(u => u.Id == Project.ProjectManagerId))!;
+
         using var context = DbFactory.CreateDbContext();
+        Project.ProjectManager = projectManager;
+        context.Attach(projectManager);
+        context.Entry(projectManager).State = EntityState.Unchanged;
+
+        Project.Participants = new List<ApplicationUser>(new[] { projectManager });
+
         context.Projects.Add(Project);
         await context.SaveChangesAsync();
+
         NavigationManager.NavigateTo("/projects");
+    }
+
+    private void OnEndDateChange()
+    {
+        if (isEndDateEnabled)
+        {
+            Project.EndDate = DateTime.Now.AddMonths(1);
+        }
     }
 }
