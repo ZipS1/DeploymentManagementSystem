@@ -29,7 +29,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddIdentityCore<ApplicationUser>(options => {
+        options.SignIn.RequireConfirmedAccount = false;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireDigit = false;
+    })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
@@ -38,10 +45,9 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 var app = builder.Build();
 
-await using (var scope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope())
+using (var scope = app.Services.CreateAsyncScope())
 {
-    var options = scope.ServiceProvider.GetRequiredService<DbContextOptions<ApplicationDbContext>>();
-    await DbInitializer.EnsureDbCreatedAndSeededAsync(options);
+    await AppInitializer.EnsureAppInitialized(scope);
 }
 
 // Configure the HTTP request pipeline.

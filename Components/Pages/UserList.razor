@@ -1,0 +1,93 @@
+﻿@page "/Users"
+@using DeploymentManagementSystem.Components.Account
+@using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
+@rendermode InteractiveServer
+
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>User List</h3>
+
+@if (Users == null)
+{
+    <p>Loading...</p>
+}
+else if (Users.Count == 0)
+{
+    <p>No users found.</p>
+}
+else
+{
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Lastname</th>
+                <th>Name</th>
+                <th>Patronymic</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@(!string.IsNullOrEmpty(user.Lastname) ? user.Lastname : "-")</td>
+                    <td>@(!string.IsNullOrEmpty(user.Name) ? user.Name : "-")</td>
+                    <td>@(!string.IsNullOrEmpty(user.Patronymic) ? user.Patronymic : "-")</td>
+                    <td>
+                        @if (user.Id == currentUserId)
+                        {
+                            <InputSelect @bind-Value="user.Role" @bind-Value:after="() => OnRoleChange(user)" disabled="true">
+                                @foreach (var role in Roles)
+                                {
+                                    <option value="@role.Name">@role.Name</option>
+                                }
+                            </InputSelect>
+                        }
+                        else {
+                            <InputSelect @bind-Value="user.Role" @bind-Value:after="() => OnRoleChange(user)">
+                                @foreach (var role in Roles)
+                                {
+                                    <option value="@role.Name">@role.Name</option>
+                                }
+                            </InputSelect>
+                        }
+                    </td>
+                    
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ApplicationUser> Users = new();
+    private List<IdentityRole> Roles = new();
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = UserManager.Users.Where(u => u.Name != "root").ToList();
+        Roles = RoleManager.Roles.ToList();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+    }
+
+    private async Task OnRoleChange(ApplicationUser user)
+    {
+        var updateResult = await UserManager.UpdateAsync(user);
+        await UserManager.RemoveFromRolesAsync(user, (await UserManager.GetRolesAsync(user)));
+        await UserManager.AddToRoleAsync(user, user.Role);
+    }
+}
