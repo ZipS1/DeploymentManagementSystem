@@ -1,14 +1,17 @@
 ﻿@page "/projects"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using DeploymentManagementSystem.Data.Models
 @using DeploymentManagementSystem.Data
+
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
 @implements IAsyncDisposable
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
 
-<PageTitle>Projects</PageTitle>
+<PageTitle>All Projects</PageTitle>
 
-<h1>Projects</h1>
+<h1>All Projects</h1>
 
 <p>
     <a href="projects/create">Create New</a>
