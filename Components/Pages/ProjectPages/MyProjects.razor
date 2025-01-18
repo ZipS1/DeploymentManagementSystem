@@ -1,0 +1,85 @@
+﻿@page "/MyProjects"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using DeploymentManagementSystem.Data.Models
+@using DeploymentManagementSystem.Data
+
+@implements IAsyncDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>My projects</PageTitle>
+
+<h1>My projects</h1>
+
+@if (currentUserId is null)
+{
+    <p>Loading...</p>
+} 
+else if (!isProjectsExist)
+{
+    <p>You have not beed added to any project yet</p>
+}
+else
+{
+    <QuickGrid Class="table" Items="context.Projects
+                                .Include(p => p.ProjectManager)
+                                .Include(p => p.Participants)
+                                .Where(p => p.Participants!.Any(u => u.Id == currentUserId))">
+        <TemplateColumn Context="project" Title="Name">
+            <a href="@($"projects/details?id={project.Id}")">@project.Name</a>
+        </TemplateColumn>
+        <TemplateColumn Context="project" Title="Description">
+            @(!string.IsNullOrEmpty(project.Description)
+                                    ? project.Description
+                                    : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="project" Title="Start Date">
+            @project.StartDate.ToShortDateString()
+        </TemplateColumn>
+        <TemplateColumn Context="project" Title="End Date">
+            @(project.EndDate is not null
+                                    ? project.EndDate.Value.ToShortDateString()
+                                    : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="project" Title="Gitlab URL">
+            @(!string.IsNullOrEmpty(project.GitlabUrl)
+                                    ? project.GitlabUrl
+                                    : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="project" Title="Project Manager">
+            @project.ProjectManager?.Fullname
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+@code {
+    private ApplicationDbContext context = default!;
+    private string? currentUserId;
+    private bool isProjectsExist = false;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        context = DbFactory.CreateDbContext();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+
+        var items = context.Projects
+                                .Include(p => p.ProjectManager)
+                                .Include(p => p.Participants)
+                                .Where(p => p.Participants!.Any(u => u.Id == currentUserId));
+
+        if (await items.AnyAsync())
+        {
+            isProjectsExist = true;
+        }
+
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

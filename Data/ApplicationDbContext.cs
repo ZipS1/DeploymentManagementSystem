@@ -25,6 +25,8 @@ namespace DeploymentManagementSystem.Data
             builder.ApplyConfiguration(new TaskTypeConfiguration());
             builder.ApplyConfiguration(new TaskStatusConfiguration());
             builder.ApplyConfiguration(new TaskStatusTransitionConfiguration());
+
+            builder.Entity<ApplicationUser>().Ignore(u => u.Fullname);
         }
     }
 }

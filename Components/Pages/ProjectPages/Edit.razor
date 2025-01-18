@@ -1,0 +1,169 @@
+﻿@page "/projects/edit"
+@using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using DeploymentManagementSystem.Data.Models
+
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
+@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Project</h2>
+<hr />
+@if (Project is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Project" OnValidSubmit="UpdateProject" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Project.Id" value="@Project.Id" />
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText id="name" @bind-Value="Project.Name" class="form-control" />
+                    <ValidationMessage For="() => Project.Name" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputTextArea id="description" @bind-Value="Project.Description" @bind-Value:after="() => SetNullIfWhitespace(nameof(Project.Description))" class="form-control" />
+                    <ValidationMessage For="() => Project.Description" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="startdate" class="form-label">StartDate:</label>
+                    <InputDate id="startdate" @bind-Value="Project.StartDate" class="form-control" />
+                    <ValidationMessage For="() => Project.StartDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="isenddateenabled" class="form-label">EndDate:</label>
+                    <InputCheckbox id="isenddateenabled" @bind-Value="isEndDateEnabled"></InputCheckbox>
+                </div>
+                @if (isEndDateEnabled)
+                {
+                    <div class="mb-3">
+                        <label for="enddate" class="form-label">EndDate:</label>
+                        <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" />
+                        <ValidationMessage For="() => Project.EndDate" class="text-danger" />
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <label for="enddate" class="form-label">EndDate:</label>
+                        <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" disabled />
+                    </div>
+                }
+                <div class="mb-3">
+                    <label for="gitlaburl" class="form-label">GitlabUrl:</label>
+                    <InputText id="gitlaburl" @bind-Value="Project.GitlabUrl" class="form-control" @bind-Value:after="() => SetNullIfWhitespace(nameof(Project.GitlabUrl))" />
+                    <ValidationMessage For="() => Project.GitlabUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="projectmanagerid" class="form-label">ProjectManager*:</label>
+                    <InputSelect id="projectmanagerid" @bind-Value="Project.ProjectManagerId" class="form-control">
+                        <option value="">Select a manager</option>
+                        @foreach (var projectManager in ProjectManagers)
+                        {
+                            if (projectManager.IsDataFullfilled)
+                            {
+                                <option value="@projectManager.Id">@projectManager.Fullname</option>
+                            }
+                        }
+                    </InputSelect>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/projects">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Project? Project { get; set; }
+
+    private List<ApplicationUser> ProjectManagers = new();
+    private bool isEndDateEnabled = false;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        ProjectManagers = UserManager.Users.Where(u => u.Role == "ProjectManager").ToList();
+
+        using var context = DbFactory.CreateDbContext();
+        Project ??= await context.Projects.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Project is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+        isEndDateEnabled = Project!.EndDate is not null;
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async System.Threading.Tasks.Task UpdateProject()
+    {
+        if (!isEndDateEnabled)
+        {
+            Project!.EndDate = null;
+        }
+
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Project!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ProjectExists(Project!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/projects");
+    }
+
+    private void SetNullIfWhitespace(string propertyName)
+    {
+        var value = typeof(Project).GetProperty(propertyName)!.GetValue(Project);
+        var stringValue = value?.ToString();
+        if (string.IsNullOrWhiteSpace(stringValue))
+        {
+            typeof(Project).GetProperty(propertyName)?.SetValue(Project, null);
+        }
+        else
+        {
+            typeof(Project).GetProperty(propertyName)?.SetValue(Project, stringValue);
+        }
+    }
+
+    private bool ProjectExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Projects.Any(e => e.Id == id);
+    }
+}

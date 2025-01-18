@@ -1,0 +1,132 @@
+﻿@page "/projects/create"
+
+@using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using DeploymentManagementSystem.Data.Models
+
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
+@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Project</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Project" OnValidSubmit="AddProject" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="name" class="form-label">Name*:</label> 
+                <InputText id="name" @bind-Value="Project.Name" class="form-control" /> 
+                <ValidationMessage For="() => Project.Name" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputTextArea id="description" @bind-Value="Project.Description" class="form-control" /> 
+                <ValidationMessage For="() => Project.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="startdate" class="form-label">StartDate*:</label> 
+                <InputDate id="startdate" @bind-Value="Project.StartDate" class="form-control" /> 
+                <ValidationMessage For="() => Project.StartDate" class="text-danger" /> 
+            </div>
+            <div class="mb-3">
+                <label for="isenddateenabled" class="form-label">EndDate:</label>
+                <InputCheckbox id="isenddateenabled" @bind-Value="isEndDateEnabled" @bind-Value:after="() => OnEndDateChange()"></InputCheckbox>
+            </div>
+            @if (isEndDateEnabled)
+            {
+                <div class="mb-3">
+                    <label for="enddate" class="form-label">EndDate:</label> 
+                    <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" /> 
+                    <ValidationMessage For="() => Project.EndDate" class="text-danger" /> 
+                </div>        
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label for="enddate" class="form-label">EndDate:</label>
+                    <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" disabled />
+                </div>
+            }
+            <div class="mb-3">
+                <label for="gitlaburl" class="form-label">GitlabUrl:</label> 
+                <InputText id="gitlaburl" @bind-Value="Project.GitlabUrl" class="form-control" /> 
+                <ValidationMessage For="() => Project.GitlabUrl" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="projectmanagerid" class="form-label">ProjectManager*:</label> 
+                <InputSelect id="projectmanagerid" @bind-Value="Project.ProjectManagerId" class="form-control">
+                    <option value="">Select a manager</option>
+                    @foreach (var projectManager in ProjectManagers)
+                    {
+                        if (projectManager.IsDataFullfilled)
+                        {
+                            <option value="@projectManager.Id">@projectManager.Fullname</option>
+                        }
+                    }
+                </InputSelect>
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/projects">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Project Project { get; set; } = new();
+
+    private List<ApplicationUser> ProjectManagers = new();
+    private bool isEndDateEnabled = false;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        ProjectManagers = UserManager.Users.Where(u => u.Role == "ProjectManager").ToList();
+
+        Project.StartDate = DateTime.Now;
+        Project.EndDate = null;
+    }
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async System.Threading.Tasks.Task AddProject()
+    {
+        if (!isEndDateEnabled)
+        {
+            Project.EndDate = null;
+        }
+
+        ApplicationUser projectManager = (await UserManager.Users.FirstOrDefaultAsync(u => u.Id == Project.ProjectManagerId))!;
+
+        using var context = DbFactory.CreateDbContext();
+        Project.ProjectManager = projectManager;
+        context.Attach(projectManager);
+        context.Entry(projectManager).State = EntityState.Unchanged;
+
+        Project.Participants = new List<ApplicationUser>(new[] { projectManager });
+
+        context.Projects.Add(Project);
+        await context.SaveChangesAsync();
+
+        NavigationManager.NavigateTo("/projects");
+    }
+
+    private void OnEndDateChange()
+    {
+        if (isEndDateEnabled)
+        {
+            Project.EndDate = DateTime.Now.AddMonths(1);
+        }
+    }
+}

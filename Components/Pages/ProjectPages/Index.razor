@@ -1,0 +1,62 @@
+﻿@page "/projects"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using DeploymentManagementSystem.Data.Models
+@using DeploymentManagementSystem.Data
+
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
+@implements IAsyncDisposable
+@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>All Projects</PageTitle>
+
+<h1>All Projects</h1>
+
+<p>
+    <a href="projects/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Projects.Include(p => p.ProjectManager)">
+    <TemplateColumn Context="project" Title="Name">
+        <a href="@($"projects/details?id={project.Id}")">@project.Name</a>
+    </TemplateColumn>
+    <TemplateColumn Context="project" Title="Description">
+        @(!string.IsNullOrEmpty(project.Description)
+            ? project.Description
+            : "-" )
+    </TemplateColumn>
+    <TemplateColumn Context="project" Title="Start Date">
+            @project.StartDate.ToShortDateString()
+    </TemplateColumn>
+    <TemplateColumn Context="project" Title="End Date">
+        @(project.EndDate is not null
+            ? project.EndDate.Value.ToShortDateString()
+            : "-" )
+    </TemplateColumn>
+    <TemplateColumn Context="project" Title="Gitlab URL">
+        @(!string.IsNullOrEmpty(project.GitlabUrl)
+            ? project.GitlabUrl
+            : "-" )
+    </TemplateColumn>
+    <TemplateColumn Context="project" Title="Project Manager">
+        @project.ProjectManager?.Fullname
+    </TemplateColumn>
+
+    <TemplateColumn Context="project">
+        <a href="@($"projects/edit?id={project.Id}")">Edit</a> |
+        <a href="@($"projects/details?id={project.Id}")">Details</a> |
+        <a href="@($"projects/delete?id={project.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
