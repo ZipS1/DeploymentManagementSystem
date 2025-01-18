@@ -13,6 +13,8 @@ namespace DeploymentManagementSystem.Data
         public string Role { get; set; } = "NewUser";
 
         public ICollection<Project>? Projects { get; set; }
+
+        public string Fullname => $"{Lastname} {Name!.First()}.{Patronymic!.First()}.".Trim();
     }
 
 }

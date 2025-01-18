@@ -1,0 +1,67 @@
+﻿@page "/projects/details"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using DeploymentManagementSystem.Data.Models
+
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
+@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Project</PageTitle>
+
+<h1>Project</h1>
+
+<div>
+    @if (project is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <h2>@project.Name</h2>
+        @if (project.Description is not null)
+        {
+            <p>@project.Description</p>
+        }
+        @if (project.GitlabUrl is not null)
+        {
+            <a target="_blank" rel="noopener noreferrer" href="@project.GitlabUrl">GitLab</a>
+        }
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-2">StartDate</dt>
+            <dd class="col-sm-10">@project.StartDate.ToShortDateString()</dd>
+            @if (project.EndDate is not null)
+            {
+                <dt class="col-sm-2">EndDate</dt>
+                <dd class="col-sm-10">@project.EndDate.Value.ToShortDateString()</dd>
+            }
+            <dt class="col-sm-2">ProjectManager</dt>
+            <dd class="col-sm-10">@project.ProjectManager!.Fullname</dd>
+        </dl>
+        <div>
+            <a href="@($"/projects/edit?id={project.Id}")">Edit</a> |
+            <a href="@($"/projects")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Project? project;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        project = await context.Projects
+                                    .Include(p => p.ProjectManager)
+                                    .Include(p => p.Participants)
+                                    .FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (project is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

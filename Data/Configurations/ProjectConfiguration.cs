@@ -1,4 +1,5 @@
-﻿using DeploymentManagementSystem.Data.Heplers;
+﻿using DeploymentManagementSystem.Data.DataAnnotations;
+using DeploymentManagementSystem.Data.Heplers;
 using DeploymentManagementSystem.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

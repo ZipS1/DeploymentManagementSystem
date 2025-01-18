@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using DeploymentManagementSystem.Components;
 using DeploymentManagementSystem.Components.Account;
 using DeploymentManagementSystem.Data;
@@ -25,8 +25,16 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString), ServiceLifetime.Scoped
+);
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options
+        .UseNpgsql(connectionString)
+        .EnableDetailedErrors());
+
+builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => {
