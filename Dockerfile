@@ -4,10 +4,8 @@ EXPOSE 80
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-
-COPY ["YourProject.csproj", "./"]
+COPY ["DeploymentManagementSystem.csproj", "./"]
 RUN dotnet restore
-
 COPY . .
 RUN dotnet build -c Release -o /app/build
 
@@ -17,4 +15,4 @@ RUN dotnet publish -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "YourProject.dll"]
+ENTRYPOINT ["dotnet", "DeploymentManagementSystem.dll"]
