@@ -8,7 +8,7 @@
 
 <PageTitle>Home</PageTitle>
 
-<AuthorizeView Roles="NewUser,Developer,LeadDeveloper,ProjectManager">
+<AuthorizeView Roles="NewUser,Developer,Lead,ProjectManager">
 	@if (user is null) {
 		<p>Loading...</p>
 	} else if (!user.IsDataFullfilled) {
@@ -27,7 +27,7 @@
 <AuthorizeView Roles="ProjectManager">
 	<p>You are a project manager</p>
 </AuthorizeView>
-<AuthorizeView Roles="LeadDeveloper">
+<AuthorizeView Roles="Lead">
 	<p>You are a lead developer</p>
 </AuthorizeView>
 <AuthorizeView Roles="Developer">

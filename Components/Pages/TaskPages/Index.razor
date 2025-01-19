@@ -6,7 +6,7 @@
 @using DeploymentManagementSystem.Data.Models
 @using DeploymentManagementSystem.Data
 
-@attribute [Authorize(Roles = "Admin,ProjectManager,LeadDeveloper,Developer")]
+@attribute [Authorize(Roles = "Admin,ProjectManager,Lead,Developer")]
 @implements IAsyncDisposable
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -25,7 +25,7 @@ else
     <h1>@($"\"{projectName}\" tasks")</h1>
 
     <a href=@($"projects/details?id={ProjectId}")>Back to project</a>
-    <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+    <AuthorizeView Roles="Admin,ProjectManager,Lead">
         <p>
             <a href=@($"tasks/create?projectid={ProjectId}")>Create New</a>
         </p>
@@ -68,7 +68,7 @@ else
                     ? task.AssignedUser!.Fullname
                     : "-")
         </AuthorizeView>
-        <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+        <AuthorizeView Roles="Admin,ProjectManager,Lead">
             @if (task.AssignedUserId is null)
             {
                 <button class="btn btn-primary" @onclick="() => OnAssignToTaskClick(task)">Add assignee</button>
@@ -97,7 +97,7 @@ else
         <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Created by" />
 
             <TemplateColumn Context="task">
-        <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+        <AuthorizeView Roles="Admin,ProjectManager,Lead">
                 <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Edit</a> |
                 <a href="@($"tasks/delete?id={task.Id}&projectid={ProjectId}")">Delete</a>
         </AuthorizeView>

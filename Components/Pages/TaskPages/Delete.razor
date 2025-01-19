@@ -3,7 +3,7 @@
 @using Microsoft.EntityFrameworkCore
 @using DeploymentManagementSystem.Data.Models
 
-@attribute [Authorize(Roles = "Admin,ProjectManager,LeadDeveloper")]
+@attribute [Authorize(Roles = "Admin,ProjectManager,Lead")]
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 

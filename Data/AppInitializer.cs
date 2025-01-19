@@ -26,7 +26,7 @@ namespace DeploymentManagementSystem.Data
         private static async Task EnsureRolesCreated(AsyncServiceScope scope)
         {
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var roles = new[] { "Admin", "NewUser", "ProjectManager", "Developer", "LeadDeveloper" };
+            var roles = new[] { "Admin", "NewUser", "ProjectManager", "Developer", "Lead" };
 
             foreach (var role in roles)
             {
@@ -120,12 +120,12 @@ namespace DeploymentManagementSystem.Data
                 new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
                                                     FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
                                                     ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Needs revision")!.Id,
-                                                    AllowedRoles = "ProjectManager,LeadDeveloper"
+                                                    AllowedRoles = "ProjectManager,Lead"
                                                 },
                 new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
                                                     FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
                                                     ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Finished")!.Id,
-                                                    AllowedRoles = "ProjectManager,LeadDeveloper"
+                                                    AllowedRoles = "ProjectManager,Lead"
                                                 },
                 new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
                                                     FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Needs revision")!.Id,
