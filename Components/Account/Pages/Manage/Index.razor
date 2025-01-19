@@ -9,16 +9,18 @@
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>Профиль</PageTitle>
 
-<h3>Profile</h3>
+<h3>Профиль</h3>
 @if (user is not null)
 {
     if (IsAccountFullfilled())
     {
-        <p>Filled</p>
-    } else {
-        <p>Not filled</p>
+        <p>Заполнено</p>
+    }
+    else
+    {
+        <p>Не заполнено</p>
     }
 }
 <StatusMessage />
@@ -28,30 +30,30 @@
         <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
             <DataAnnotationsValidator />
             <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
+                <input type="text" value="@username" class="form-control" placeholder="Выберите ваше имя пользователя." disabled />
+                <label for="username" class="form-label">Имя пользователя</label>
             </div>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." hidden />
-                <label for="phone-number" class="form-label">Phone number</label>
+                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Введите ваш номер телефона." hidden />
+                <label for="phone-number" class="form-label">Номер телефона</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Lastname" class="form-control" placeholder="Please enter your lastname." />
-                <label for="lastname" class="form-label">Lastname</label>
+                <InputText @bind-Value="Input.Lastname" class="form-control" placeholder="Введите вашу фамилию." />
+                <label for="lastname" class="form-label">Фамилия</label>
                 <ValidationMessage For="() => Input.Lastname" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Name" class="form-control" placeholder="Please enter your name." />
-                <label for="name" class="form-label">Name</label>
+                <InputText @bind-Value="Input.Name" class="form-control" placeholder="Введите ваше имя." />
+                <label for="name" class="form-label">Имя</label>
                 <ValidationMessage For="() => Input.Name" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Patronymic" class="form-control" placeholder="Please enter your patronymic." />
-                <label for="patronymic" class="form-label">Patronymic</label>
+                <InputText @bind-Value="Input.Patronymic" class="form-control" placeholder="Введите ваше отчество." />
+                <label for="patronymic" class="form-label">Отчество</label>
                 <ValidationMessage For="() => Input.Patronymic" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Сохранить</button>
         </EditForm>
     </div>
 </div>
@@ -96,7 +98,7 @@
             var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
             if (!setPhoneResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Ошибка: не удалось установить номер телефона.", HttpContext);
             }
         }
 
@@ -128,12 +130,12 @@
             var setNameResult = await UserManager.UpdateAsync(user);
             if (!setNameResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set new name.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Ошибка: не удалось установить новое имя.", HttpContext);
             }
         }
 
         await SignInManager.RefreshSignInAsync(user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+        RedirectManager.RedirectToCurrentPageWithStatus("Ваш профиль был обновлён", HttpContext);
     }
 
     private bool IsAccountFullfilled() => user.Lastname is not null && user.Name is not null && user.Patronymic is not null;
@@ -141,17 +143,17 @@
     private sealed class InputModel
     {
         [Phone]
-        [Display(Name = "Phone number")]
+        [Display(Name = "Номер телефона")]
         public string? PhoneNumber { get; set; }
 
-        [StringLength(99, ErrorMessage = "Length must less than 100")]
+        [StringLength(99, ErrorMessage = "Длина должна быть меньше 100 символов")]
         public string? Lastname { get; set; }
 
-        [RegularExpression("^(?!root$).*$", ErrorMessage = "The value cannot be 'root'")]
-        [StringLength(99, ErrorMessage = "Length must less than 100")]
+        [RegularExpression("^(?!root$).*$", ErrorMessage = "Значение не может быть 'root'")]
+        [StringLength(99, ErrorMessage = "Длина должна быть меньше 100 символов")]
         public string? Name { get; set; }
 
-        [StringLength(99, ErrorMessage = "Length must less than 100")]
+        [StringLength(99, ErrorMessage = "Длина должна быть меньше 100 символов")]
         public string? Patronymic { get; set; }
     }
 }
