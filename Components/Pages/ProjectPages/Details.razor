@@ -126,7 +126,13 @@ else
             NavigationManager.NavigateTo("notfound");
         }
 
-        Participants.AddRange(project!.Participants!);
+        Participants
+            .AddRange(project!.Participants!
+                        .OrderByDescending(u => u.Role)
+                        .ThenBy(u => u.Lastname)
+                        .ThenBy(u => u.Name)
+                        .ThenBy(u => u.Patronymic));
+
 
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;

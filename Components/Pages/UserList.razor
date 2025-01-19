@@ -73,7 +73,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Users = UserManager.Users.Where(u => u.Name != "root").ToList();
+        Users = UserManager.Users
+                                .Where(u => u.Name != "root")
+                                .OrderByDescending(u => u.Role)
+                                .ThenBy(u => u.Lastname)
+                                .ThenBy(u => u.Name)
+                                .ThenBy(u => u.Patronymic)
+                                .ToList();
         Roles = RoleManager.Roles.ToList();
 
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
