@@ -1,0 +1,90 @@
+﻿@page "/tasks/delete"
+@using Microsoft.EntityFrameworkCore
+@using DeploymentManagementSystem.Data.Models
+@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Task</h2>
+    <hr />
+    @if (task is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@task.Name</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@task.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CreationDate</dt>
+            <dd class="col-sm-10">@task.CreationDate</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DueDate</dt>
+            <dd class="col-sm-10">@task.DueDate</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">TaskStatusId</dt>
+            <dd class="col-sm-10">@task.TaskStatusId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">TaskTypeId</dt>
+            <dd class="col-sm-10">@task.TaskTypeId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">ProjectId</dt>
+            <dd class="col-sm-10">@task.ProjectId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">AssignedUserId</dt>
+            <dd class="col-sm-10">@task.AssignedUserId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CreatorUserId</dt>
+            <dd class="col-sm-10">@task.CreatorUserId</dd>
+        </dl>
+        <EditForm method="post" Model="task" OnValidSubmit="DeleteTask" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(task is null)">Delete</button> |
+            <a href=@($"/tasks?projectid={ProjectId}")>Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Data.Models.Task? task;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromQuery]
+    private int ProjectId { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        task = await context.Tasks.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (task is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async System.Threading.Tasks.Task DeleteTask()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Tasks.Remove(task!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo($"/tasks?projectid={ProjectId}");
+    }
+}

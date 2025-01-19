@@ -1,0 +1,78 @@
+﻿@page "/tasks"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using DeploymentManagementSystem.Data.Models
+@using DeploymentManagementSystem.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@rendermode InteractiveServer
+
+@if (projectName is null)
+{
+    <PageTitle>"Loading tasks..."</PageTitle>
+    <h1>"Loading tasks..."</h1>
+}
+else
+{
+    <PageTitle>@($"\"{projectName}\" tasks") </PageTitle>
+    <h1>@($"\"{projectName}\" tasks")</h1>
+
+    <a href=@($"projects/details?id={ProjectId}")>Back to project</a>
+
+    <p>
+        <a href=@($"tasks/create?projectid={ProjectId}")>Create New</a>
+    </p>
+
+    <QuickGrid Class="table" Items="context.Tasks
+                                                .Include(t => t.TaskType)
+                                                .Include(t => t.TaskStatus)
+                                                .Include(a => a.AssignedUser)
+                                                .Include(c => c.CreatorUser)
+                                                .Where(t => t.ProjectId == ProjectId)">
+        <PropertyColumn Property="task => task.Name" />
+        <TemplateColumn Context="task" Title="Description">
+            @(!string.IsNullOrEmpty(task.Description)
+                ? task.Description
+                : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="task" Title="Creation Date">
+            @task.CreationDate.ToShortDateString()
+        </TemplateColumn>
+        <TemplateColumn Context="task" Title="Due Date">
+            @(task.DueDate is not null
+                ? task.DueDate.Value.ToShortDateString()
+                : "-")
+        </TemplateColumn>
+        <PropertyColumn Property="task => task.TaskStatus!.Name" Title="Status" />
+        <PropertyColumn Property="task => task.TaskType!.Name" Title="Type" />
+        <TemplateColumn Context="task" Title="Assigned">
+            @(task.AssignedUser is not null
+                ? task.AssignedUser.Fullname
+                : "-")
+        </TemplateColumn>
+        <PropertyColumn Property="task => task.CreatorUser!.Fullname" />
+
+        <TemplateColumn Context="task">
+            <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Edit</a> |
+            <a href="@($"tasks/delete?id={task.Id}&projectid={ProjectId}")">Delete</a>
+        </TemplateColumn>
+    </QuickGrid>
+}
+
+
+
+@code {
+    private ApplicationDbContext context = default!;
+    private string? projectName;
+
+    [SupplyParameterFromQuery]
+    private int ProjectId { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        context = DbFactory.CreateDbContext();
+        projectName = (await context.Projects.FirstOrDefaultAsync(p => p.Id == ProjectId))!.Name;
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

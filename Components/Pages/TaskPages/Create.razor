@@ -1,0 +1,190 @@
+﻿@page "/tasks/create"
+@using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@rendermode InteractiveServer
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Task</h2>
+<hr />
+
+@if (!isLoadingCompleted)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Task" OnValidSubmit="AddTask" FormName="create" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" role="alert"/>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name*:</label> 
+                    <InputText id="name" @bind-Value="Task.Name" class="form-control" /> 
+                    <ValidationMessage For="() => Task.Name" class="text-danger" /> 
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description:</label>
+                    <InputTextArea id="description" @bind-Value="Task.Description" @bind-Value:after="() => SetNullIfWhitespace(nameof(Task.Description))" class="form-control" />
+                    <ValidationMessage For="() => Task.Description" class="text-danger" /> 
+                </div>
+                <div class="mb-3">
+                    <label for="creationdate" class="form-label">CreationDate:</label> 
+                    <InputDate id="creationdate" @bind-Value="Task.CreationDate" class="form-control" disabled="True"/> 
+                    <ValidationMessage For="() => Task.CreationDate" class="text-danger" /> 
+                </div>
+                <div class="mb-3">
+                    <label for="isduedateenabled" class="form-label">DueDate:</label>
+                    <InputCheckbox id="isduedateenabled" @bind-Value="isDueDateEnabled" @bind-Value:after="() => OnDueDateChange()"></InputCheckbox>
+                </div>
+                @if (isDueDateEnabled)
+                {
+                    <div class="mb-3">
+                        <label for="duedate" class="form-label">DueDate:</label> 
+                        <InputDate id="duedate" @bind-Value="Task.DueDate" class="form-control" /> 
+                        <ValidationMessage For="() => Task.DueDate" class="text-danger" /> 
+                    </div>        
+                }
+                <div class="mb-3">
+                    <InputNumber id="taskstatusid" @bind-Value="Task.TaskStatusId" class="form-control" hidden /> 
+                    <ValidationMessage For="() => Task.TaskStatusId" class="text-danger" /> 
+                </div>        
+                <div class="mb-3">
+                    <label for="tasktypeid" class="form-label">TaskType*:</label> 
+                    <InputSelect id="tasktypeid" @bind-Value="Task.TaskTypeId" class="form-control">
+                        <option value="">Select a task type</option>
+                        @foreach (var taskType in TaskTypes)
+                        {
+                            <option value="@taskType.Id">@taskType.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Task.TaskTypeId" class="text-danger" /> 
+                </div>        
+                <div class="mb-3">
+                    <InputNumber id="projectid" @bind-Value="Task.ProjectId" class="form-control" hidden /> 
+                    <ValidationMessage For="() => Task.ProjectId" class="text-danger" /> 
+                </div>        
+                <div class="mb-3">
+                    <label for="assigneduserid" class="form-label">AssignedUser:</label> 
+                    <InputSelect id="assigneduserid" @bind-Value="Task.AssignedUserId" class="form-control">
+                        <option value="">None</option>
+                        @foreach (var participant in Participants)
+                        {
+                            if (participant.IsDataFullfilled)
+                            {
+                                <option value="@participant.Id">@participant.Fullname</option>
+                            }
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Task.AssignedUserId" class="text-danger" /> 
+                </div>        
+                <div class="mb-3">
+                    <InputText id="creatoruserid" @bind-Value="Task.CreatorUserId" class="form-control" hidden /> 
+                    <ValidationMessage For="() => Task.CreatorUserId" class="text-danger" /> 
+                </div>        
+                <button type="submit" class="btn btn-primary">Create</button>
+            </EditForm>
+        </div>
+    </div>
+
+    <div>
+        <a href=@($"tasks?projectid={ProjectId}")>Back to List</a>
+    </div>
+}
+
+@code {
+    private bool isLoadingCompleted = false;
+    private string? currentUserId;
+    private List<ApplicationUser> Participants = new();
+    private List<Data.Models.TaskType> TaskTypes = new();
+    private bool isDueDateEnabled = false;
+
+    [SupplyParameterFromForm]
+    private Data.Models.Task Task { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private int ProjectId { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+
+        using var context = DbFactory.CreateDbContext();
+
+        Participants = context.Projects
+                                .Include(p => p.Participants)
+                                .FirstOrDefault(p => p.Id == ProjectId)!
+                                .Participants!
+                                .ToList();
+
+        TaskTypes = context.TaskTypes
+                                .ToList();
+
+        Task.ProjectId = ProjectId;
+        Task.CreationDate = DateTime.Now;
+        Task.CreatorUserId = currentUserId!;
+
+        isLoadingCompleted = true;
+    }
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async System.Threading.Tasks.Task AddTask()
+    {
+        using var context = DbFactory.CreateDbContext();
+
+        if (string.IsNullOrEmpty(Task.AssignedUserId))
+        {
+            Task.AssignedUserId = null;
+            Task.TaskStatusId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Id == Task.TaskTypeId))!.InitialTaskStatusId;
+        }
+        else
+        {
+            Task.TaskStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == "Assigned"))!.Id;
+        }
+
+        if (!isDueDateEnabled)
+        {
+            Task.DueDate = null;
+        }
+
+        context.Tasks.Add(Task);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo($"/tasks?projectid={ProjectId}");
+    }
+
+    private void SetNullIfWhitespace(string propertyName)
+    {
+        var value = typeof(Data.Models.Task).GetProperty(propertyName)!.GetValue(Task);
+        var stringValue = value?.ToString();
+        if (string.IsNullOrWhiteSpace(stringValue))
+        {
+            typeof(Data.Models.Task).GetProperty(propertyName)?.SetValue(Task, null);
+        }
+        else
+        {
+            typeof(Data.Models.Task).GetProperty(propertyName)?.SetValue(Task, stringValue);
+        }
+    }
+
+    private void OnDueDateChange()
+    {
+        if (isDueDateEnabled)
+        {
+            Task.DueDate = DateTime.Now.AddDays(7);
+        }
+    }
+}

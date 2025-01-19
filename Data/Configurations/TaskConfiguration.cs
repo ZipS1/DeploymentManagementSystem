@@ -65,7 +65,6 @@ namespace DeploymentManagementSystem.Data.Configurations
                 .HasComment("Идентификатор проекта задачи");
 
             builder.Property(p => p.AssignedUserId)
-                .IsRequired()
                 .HasColumnName($"f_{ModelName}_assigned_user_id")
                 .HasColumnType(ColumnType.String)
                 .HasComment("Идентификатор исполнителя задачи");
