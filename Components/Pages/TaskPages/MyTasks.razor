@@ -1,0 +1,128 @@
+﻿@page "/MyTasks"
+@using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize(Roles = "Developer,LeadDeveloper")]
+
+<PageTitle>My tasks</PageTitle>
+<h3>My tasks</h3>
+
+@if (!isLoadingCompleted)
+{
+    <h1>"Loading tasks..."</h1>
+}
+else if (!isTasksExist)
+{
+    <p>You have no tasks assigned</p>
+}
+else
+{
+    <QuickGrid Class="table" Items="context.Tasks
+                                                .Include(t => t.TaskType)
+                                                .Include(t => t.TaskStatus)
+                                                .Include(a => a.AssignedUser)
+                                                .Include(c => c.CreatorUser)
+                                                .Where(c => c.CreatorUserId == currentUser!.Id || c.AssignedUserId == currentUser.Id)
+                                                .OrderBy(t => t.CreationDate)">
+        <PropertyColumn Property="task => task.Name" />
+        <TemplateColumn Context="task" Title="Description">
+            @(!string.IsNullOrEmpty(task.Description)
+                                                                                                        ? task.Description
+                                                                                                        : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="task" Title="Due Date">
+            @(task.DueDate is not null
+                                                                                                        ? task.DueDate.Value.ToShortDateString()
+                                                                                                        : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="task" Title="Status">
+            <InputSelect @bind-Value=task.TaskStatusId class="form-control" @bind-Value:after="() => OnTaskChange(task)">
+                @foreach (var status in TaskStatuses)
+                {
+                    var allowedStatusIds = FetchAllowedStatusIds(task, currentUser!);
+                    @if (allowedStatusIds.Any(t => t == status.Id))
+                    {
+                        <option value="@status.Id">@status.Name</option>
+                    }
+                }
+            </InputSelect>
+        </TemplateColumn>
+        <PropertyColumn Property="task => task.TaskType!.Name" Title="Type" />
+        <TemplateColumn Context="task" Title="Assigned">
+            @(task.AssignedUserId is not null
+                            ? task.AssignedUser!.Fullname
+                            : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="task" Title="Created at">
+            @task.CreationDate.ToShortDateString()
+        </TemplateColumn>
+        <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Created by" />
+    </QuickGrid>
+}
+@code {
+    private ApplicationDbContext context = default!;
+    private ApplicationUser? currentUser;
+    private bool isLoadingCompleted = false;
+    private bool isTasksExist = false;
+
+    private List<Data.Models.TaskStatus> TaskStatuses { get; set; } = new();
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUser = await UserManager.FindByIdAsync(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+        context = DbFactory.CreateDbContext();
+        TaskStatuses = await context.TaskStatuses.ToListAsync();
+
+        var items = context.Tasks
+            .Where(c => c.CreatorUserId == currentUser!.Id || c.AssignedUserId == currentUser.Id);
+
+        if (await items.AnyAsync())
+        {
+            isTasksExist = true;
+        }
+
+        isLoadingCompleted = true;
+    }
+
+    private List<int> FetchAllowedStatusIds(Data.Models.Task task, ApplicationUser user)
+    {
+        List<int> allowedStatusIds = new(new int[] { task.TaskStatusId });
+        using var context = DbFactory.CreateDbContext();
+        allowedStatusIds.AddRange(context.TaskStatusTransitions
+            .Where(t => task.TaskStatusId == t.FromTaskStatusId)
+            .Where(t => t.AllowedRoles.Contains("Assignee") && user.Id == task.AssignedUserId)
+            .Select(t => t.ToTaskStatusId));
+
+        allowedStatusIds.AddRange(context.TaskStatusTransitions
+            .Where(t => task.TaskStatusId == t.FromTaskStatusId)
+            .Where(t => t.AllowedRoles.Contains(user.Role))
+            .Select(t => t.ToTaskStatusId));
+
+        return allowedStatusIds;
+    }
+
+    private void OnTaskChange(Data.Models.Task task)
+    {
+        if (task.TaskStatus!.Name == "New" && task.AssignedUserId is not null)
+        {
+            task.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "Assigned")!.Id;
+        }
+
+        using var context = DbFactory.CreateDbContext();
+        var existingTask = context.Tasks.Find(task.Id)!;
+
+        context.Entry(existingTask).CurrentValues.SetValues(task);
+        context.SaveChanges();
+        NavigationManager.Refresh(forceReload: true);
+    }
+}

@@ -5,6 +5,7 @@
 @using DeploymentManagementSystem.Data.Models
 @using DeploymentManagementSystem.Data
 
+@attribute [Authorize(Roles = "Developer,LeadDeveloper")]
 @implements IAsyncDisposable
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider

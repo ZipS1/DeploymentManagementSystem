@@ -70,7 +70,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        Users = UserManager.Users.Where(u => u.Role != "Admin" && u.Role != "NewUser").ToList();
+        Users = UserManager.Users
+                                .Where(u => u.Role != "Admin" && u.Role != "NewUser")
+                                .OrderByDescending(u => u.Role)
+                                .ThenBy(u => u.Lastname)
+                                .ThenBy(u => u.Name)
+                                .ThenBy(u => u.Patronymic)
+                                .ToList();
+
         Participants = context.Projects
                                     .Include(p => p.Participants)
                                     .FirstOrDefault(p => p.Id == Id)!.Participants!

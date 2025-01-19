@@ -1,0 +1,192 @@
+﻿@page "/tasks"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using DeploymentManagementSystem.Data.Models
+@using DeploymentManagementSystem.Data
+
+@attribute [Authorize(Roles = "Admin,ProjectManager,LeadDeveloper,Developer")]
+@implements IAsyncDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+@if (!isLoadingCompleted)
+{
+    <PageTitle>"Loading tasks..."</PageTitle>
+    <h1>"Loading tasks..."</h1>
+}
+else
+{
+    <PageTitle>@($"\"{projectName}\" tasks") </PageTitle>
+    <h1>@($"\"{projectName}\" tasks")</h1>
+
+    <a href=@($"projects/details?id={ProjectId}")>Back to project</a>
+    <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+        <p>
+            <a href=@($"tasks/create?projectid={ProjectId}")>Create New</a>
+        </p>
+    </AuthorizeView>
+
+    <QuickGrid Class="table" Items="context.Tasks
+                                                .Include(t => t.TaskType)
+                                                .Include(t => t.TaskStatus)
+                                                .Include(a => a.AssignedUser)
+                                                .Include(c => c.CreatorUser)
+                                                .Where(t => t.ProjectId == ProjectId)
+                                                .OrderBy(t => t.CreationDate)">
+        <PropertyColumn Property="task => task.Name" />
+        <TemplateColumn Context="task" Title="Description">
+            @(!string.IsNullOrEmpty(task.Description)
+                                                                                            ? task.Description
+                                                                                            : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="task" Title="Due Date">
+            @(task.DueDate is not null
+                                                                                            ? task.DueDate.Value.ToShortDateString()
+                                                                                            : "-")
+        </TemplateColumn>
+        <TemplateColumn Context="task" Title="Status">
+            <InputSelect @bind-Value=task.TaskStatusId class="form-control" @bind-Value:after="() => OnTaskChange(task)">
+                @foreach (var status in TaskStatuses)
+                {
+                    var allowedStatusIds = FetchAllowedStatusIds(task, currentUser!);
+                    @if (allowedStatusIds.Any(t => t == status.Id))
+                    {
+                        <option value="@status.Id">@status.Name</option>
+                    }
+                }
+            </InputSelect>
+        </TemplateColumn>
+        <PropertyColumn Property="task => task.TaskType!.Name" Title="Type" />
+        <TemplateColumn Context="task" Title="Assigned">
+        <AuthorizeView Roles="Developer">
+                @(task.AssignedUserId is not null
+                    ? task.AssignedUser!.Fullname
+                    : "-")
+        </AuthorizeView>
+        <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+            @if (task.AssignedUserId is null)
+            {
+                <button class="btn btn-primary" @onclick="() => OnAssignToTaskClick(task)">Add assignee</button>
+            }
+            else
+            {
+                <div class="d-inline-flex">
+                    <InputSelect @bind-Value="task.AssignedUserId" class="form-control" @bind-Value:after="() => OnTaskChange(task)">
+                        @foreach (var participant in Participants)
+                        {
+                            if (participant.IsDataFullfilled)
+                            {
+                                <option value="@participant.Id">@participant.Fullname</option>
+                            }
+                        }
+                    </InputSelect>
+                    <button class="btn-sm btn-danger" @onclick="() => OnRemoveAsigneeClick(task)">-</button>
+                </div>
+            }
+        </AuthorizeView>
+        </TemplateColumn>
+
+        <TemplateColumn Context="task" Title="Created at">
+            @task.CreationDate.ToShortDateString()
+        </TemplateColumn>
+        <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Created by" />
+
+            <TemplateColumn Context="task">
+        <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+                <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Edit</a> |
+                <a href="@($"tasks/delete?id={task.Id}&projectid={ProjectId}")">Delete</a>
+        </AuthorizeView>
+            </TemplateColumn>
+    </QuickGrid>
+
+    @code {
+    private ApplicationDbContext context = default!;
+    private ApplicationUser? currentUser;
+    private List<ApplicationUser> Participants = new();
+
+    private string? projectName;
+    private bool isLoadingCompleted = false;
+
+    private List<Data.Models.TaskStatus> TaskStatuses { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private int ProjectId { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        context = DbFactory.CreateDbContext();
+        var project = context.Projects
+                                .Include(p => p.Participants)
+                                .FirstOrDefault(p => p.Id == ProjectId)!;
+
+        projectName = project.Name;
+        Participants = project.Participants!.ToList();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUser = await UserManager.FindByIdAsync(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+        TaskStatuses = await context.TaskStatuses.ToListAsync();
+        isLoadingCompleted = true;
+    }
+
+    private List<int> FetchAllowedStatusIds(Data.Models.Task task, ApplicationUser user)
+    {
+        List<int> allowedStatusIds = new( new int[] { task.TaskStatusId });
+        using var context = DbFactory.CreateDbContext();
+        allowedStatusIds.AddRange(context.TaskStatusTransitions
+            .Where(t => task.TaskStatusId == t.FromTaskStatusId)
+            .Where(t => t.AllowedRoles.Contains("Assignee") && user.Id == task.AssignedUserId)
+            .Select(t => t.ToTaskStatusId));
+
+        allowedStatusIds.AddRange(context.TaskStatusTransitions
+            .Where(t => task.TaskStatusId == t.FromTaskStatusId)
+            .Where(t => t.AllowedRoles.Contains(user.Role))
+            .Select(t => t.ToTaskStatusId));
+
+        return allowedStatusIds;
+    }
+
+    private void OnTaskChange(Data.Models.Task task)
+    {
+        if (task.TaskStatus!.Name == "New" && task.AssignedUserId is not null)
+        {
+            task.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "Assigned")!.Id;
+        }
+
+        using var context = DbFactory.CreateDbContext();
+        var existingTask = context.Tasks.Find(task.Id)!;
+
+        context.Entry(existingTask).CurrentValues.SetValues(task);
+        context.SaveChanges();
+        NavigationManager.Refresh(forceReload: true);
+    }
+
+    private void OnAssignToTaskClick(Data.Models.Task task)
+    {
+        using var context = DbFactory.CreateDbContext();
+        var existingTask = context.Tasks.Find(task.Id)!;
+
+        existingTask.AssignedUserId = currentUser!.Id;
+        context.SaveChanges();
+        NavigationManager.Refresh(forceReload: true);
+    }
+
+    private void OnRemoveAsigneeClick(Data.Models.Task task)
+    {
+        using var context = DbFactory.CreateDbContext();
+        var existingTask = context.Tasks.Find(task.Id)!;
+
+        existingTask.AssignedUserId = null;
+        existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "New")!.Id;
+        context.SaveChanges();
+        NavigationManager.Refresh(forceReload: true);
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    }
+}
