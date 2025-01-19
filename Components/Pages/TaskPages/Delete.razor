@@ -1,6 +1,9 @@
 ﻿@page "/tasks/delete"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using DeploymentManagementSystem.Data.Models
+
+@attribute [Authorize(Roles = "Admin,ProjectManager,LeadDeveloper")]
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 

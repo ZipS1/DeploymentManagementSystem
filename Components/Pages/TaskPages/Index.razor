@@ -1,9 +1,12 @@
 ﻿@page "/tasks"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using DeploymentManagementSystem.Data.Models
 @using DeploymentManagementSystem.Data
+
+@attribute [Authorize(Roles = "Admin,ProjectManager,LeadDeveloper,Developer")]
 @implements IAsyncDisposable
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -22,10 +25,11 @@ else
     <h1>@($"\"{projectName}\" tasks")</h1>
 
     <a href=@($"projects/details?id={ProjectId}")>Back to project</a>
-
-    <p>
-        <a href=@($"tasks/create?projectid={ProjectId}")>Create New</a>
-    </p>
+    <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+        <p>
+            <a href=@($"tasks/create?projectid={ProjectId}")>Create New</a>
+        </p>
+    </AuthorizeView>
 
     <QuickGrid Class="table" Items="context.Tasks
                                                 .Include(t => t.TaskType)
@@ -59,7 +63,12 @@ else
         </TemplateColumn>
         <PropertyColumn Property="task => task.TaskType!.Name" Title="Type" />
         <TemplateColumn Context="task" Title="Assigned">
-
+        <AuthorizeView Roles="Developer">
+                @(task.AssignedUserId is not null
+                    ? task.AssignedUser!.Fullname
+                    : "-")
+        </AuthorizeView>
+        <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
             @if (task.AssignedUserId is null)
             {
                 <button class="btn btn-primary" @onclick="() => OnAssignToTaskClick(task)">Add assignee</button>
@@ -79,16 +88,20 @@ else
                     <button class="btn-sm btn-danger" @onclick="() => OnRemoveAsigneeClick(task)">-</button>
                 </div>
             }
+        </AuthorizeView>
         </TemplateColumn>
+
         <TemplateColumn Context="task" Title="Created at">
             @task.CreationDate.ToShortDateString()
         </TemplateColumn>
         <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Created by" />
 
-        <TemplateColumn Context="task">
-            <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Edit</a> |
-            <a href="@($"tasks/delete?id={task.Id}&projectid={ProjectId}")">Delete</a>
-        </TemplateColumn>
+            <TemplateColumn Context="task">
+        <AuthorizeView Roles="Admin,ProjectManager,LeadDeveloper">
+                <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Edit</a> |
+                <a href="@($"tasks/delete?id={task.Id}&projectid={ProjectId}")">Delete</a>
+        </AuthorizeView>
+            </TemplateColumn>
     </QuickGrid>
 
     @code {

@@ -1,7 +1,10 @@
 ﻿@page "/tasks/edit"
 @using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using DeploymentManagementSystem.Data.Models
+
+@attribute [Authorize(Roles = "Admin,ProjectManager")]
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer

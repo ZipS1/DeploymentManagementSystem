@@ -1,9 +1,11 @@
 ﻿@page "/tasks/create"
 @using DeploymentManagementSystem.Data
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 
+@attribute [Authorize(Roles = "Admin,ProjectManager,LeadDeveloper")]
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
