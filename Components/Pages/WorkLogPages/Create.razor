@@ -1,0 +1,105 @@
+﻿@page "/worklogs/create"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using DeploymentManagementSystem.Data.Models
+
+@attribute [Authorize(Roles = "Lead,Developer")]
+@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+<h1>Create</h1>
+<h2>WorkLog</h2>
+<hr />
+
+@if (!isLoadingFinished)
+{
+    <h4>Loading...</h4>
+}
+else if (!isTasksExist)
+{
+    <p> You have no tasks in progress assigned to you</p>
+}
+else
+{
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="WorkLog" OnValidSubmit="AddWorkLog" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="date" class="form-label">Date:</label> 
+                <InputDate id="date" @bind-Value="WorkLog.Date" class="form-control" /> 
+                <ValidationMessage For="() => WorkLog.Date" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="timespent" class="form-label">TimeSpent:</label> 
+                <InputNumber id="timespent" @bind-Value="WorkLog.TimeSpent" class="form-control" /> 
+                <ValidationMessage For="() => WorkLog.TimeSpent" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="taskid" class="form-label">Task:</label>
+                <InputSelect id="taskid" @bind-Value="WorkLog.TaskId" class="form-control">
+                    @foreach (var task in Tasks)
+                    {
+                        <option value="@task.Id">@task.Name</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => WorkLog.TaskId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <InputText id="userid" @bind-Value="WorkLog.UserId" class="form-control" hidden /> 
+                <ValidationMessage For="() => WorkLog.UserId" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href=@($"/worklogs?userid={UserId}")>Back to List</a>
+</div>
+}
+
+@code {
+    private bool isLoadingFinished = false;
+    private bool isTasksExist = false;
+
+    private List<Data.Models.Task> Tasks { get; set; } = new();
+
+    [SupplyParameterFromForm]
+    private WorkLog WorkLog { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? UserId { get; set; }
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        WorkLog.UserId = UserId!;
+        WorkLog.Date = DateTime.Now;
+
+        var inProgressStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == "In progress"))!.Id;
+        Tasks = await context.Tasks
+                            .Where(t => t.AssignedUserId == UserId)
+                            .Where(t => t.TaskStatusId == inProgressStatusId)
+                            .ToListAsync();
+
+        if (Tasks.Any())
+        {
+            isTasksExist = true;
+            WorkLog.TaskId = Tasks.First().Id;
+        }
+
+        isLoadingFinished = true;
+    }
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async System.Threading.Tasks.Task AddWorkLog()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.WorkLogs.Add(WorkLog);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo($"/worklogs?userid={UserId}");
+    }
+}

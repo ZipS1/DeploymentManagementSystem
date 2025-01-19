@@ -1,0 +1,122 @@
+﻿@page "/worklogs/edit"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using DeploymentManagementSystem.Data.Models
+
+@attribute [Authorize(Roles = "Lead,Developer")]
+@inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>WorkLog</h2>
+<hr />
+@if (WorkLog is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="WorkLog" OnValidSubmit="UpdateWorkLog" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="WorkLog.Id" value="@WorkLog.Id" />
+                <div class="mb-3">
+                    <label for="date" class="form-label">Date:</label>
+                    <InputDate id="date" @bind-Value="WorkLog.Date" class="form-control" />
+                    <ValidationMessage For="() => WorkLog.Date" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="timespent" class="form-label">TimeSpent:</label>
+                    <InputNumber id="timespent" @bind-Value="WorkLog.TimeSpent" class="form-control" />
+                    <ValidationMessage For="() => WorkLog.TimeSpent" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="taskid" class="form-label">Task:</label>
+                    <InputSelect id="taskid" @bind-Value="WorkLog.TaskId" class="form-control">
+                        @foreach (var task in Tasks)
+                        {
+                            <option value="@task.Id">@task.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => WorkLog.TaskId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <InputText id="userid" @bind-Value="WorkLog.UserId" class="form-control" hidden />
+                    <ValidationMessage For="() => WorkLog.UserId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/worklogs">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private WorkLog? WorkLog { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? UserId { get; set; }
+
+    private List<Data.Models.Task> Tasks { get; set; } = new();
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        WorkLog ??= await context.WorkLogs.FirstOrDefaultAsync(m => m.Id == Id);
+
+        var inProgressStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == "In progress"))!.Id;
+        Tasks = await context.Tasks
+                            .Where(t => t.AssignedUserId == UserId)
+                            .Where(t => t.TaskStatusId == inProgressStatusId)
+                            .ToListAsync();
+
+        if (WorkLog is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async System.Threading.Tasks.Task UpdateWorkLog()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(WorkLog!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!WorkLogExists(WorkLog!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/worklogs");
+    }
+
+    private bool WorkLogExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.WorkLogs.Any(e => e.Id == id);
+    }
+}
