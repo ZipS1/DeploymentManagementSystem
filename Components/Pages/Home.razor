@@ -8,15 +8,13 @@
 
 <PageTitle>Home</PageTitle>
 
-<AuthorizeView Roles="NewUser,Developer,Lead,ProjectManager">
-	@if (user is null) {
-		<p>Loading...</p>
-	} else if (!user.IsDataFullfilled) {
-		<p>Please fullfill your <a href="Account/Manage">profile</a> first</p>
-	} else {
-		<p>Hello, @user.Lastname @user.Name @user.Patronymic</p>
-	}
-</AuthorizeView>
+@if (!isLoadingFinished) {
+	<p>Loading...</p>
+} else if (!user.IsDataFullfilled) {
+	<p>Please fullfill your <a href="Account/Manage">profile</a> first</p>
+} else {
+	<p>@greeting, @user.Lastname @user.Name @user.Patronymic</p>
+}
 
 <AuthorizeView Roles="NewUser">
 	<p>You are a new user, ask project manager to give you a role in system</p>
@@ -36,13 +34,33 @@
 
 @code {
 	private ApplicationUser user = default!;
+	private bool isLoadingFinished = false;
+	private string? greeting;
 
 	[CascadingParameter]
 	private HttpContext HttpContext { get; set; } = default!;
 
 	protected override async Task OnInitializedAsync()
 	{
-		user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+		int hour = DateTime.Now.Hour;
+		if (hour >= 23 || hour <= 3)
+		{
+			greeting = "Good night";
+		}
+		else if (3 < hour && hour < 11)
+		{
+			greeting = "Good morning";
+		}
+		else if (11 <= hour && hour < 17)
+		{
+			greeting = "Good day";
+		}
+		else
+		{
+			greeting = "Good evening";
+		}
 
+		user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+		isLoadingFinished = true;
 	}
 }
