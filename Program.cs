@@ -24,7 +24,9 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration
+                                    .GetConnectionString("DefaultConnection")?
+                                    .Replace("${PG_PASSWORD}", Environment.GetEnvironmentVariable("PG_PASSWORD"));
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString), ServiceLifetime.Scoped
 );
