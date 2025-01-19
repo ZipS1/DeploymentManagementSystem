@@ -1,3 +1,5 @@
+name: projectops
+
 services:
   app:
     build:
@@ -7,6 +9,8 @@ services:
       - PG_PASSWORD=${PG_PASSWORD}
     ports:
       - "8080:80"
+    networks:
+      - projectops
     depends_on:
       - db
 
@@ -16,10 +20,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_DB: ProjectOps
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - projectops
+
+networks:
+    projectops:
 
 volumes:
   postgres_data:
