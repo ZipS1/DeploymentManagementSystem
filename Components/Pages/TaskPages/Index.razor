@@ -182,6 +182,7 @@ else
         var existingTask = context.Tasks.Find(task.Id)!;
 
         existingTask.AssignedUserId = null;
+        existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "New")!.Id;
         context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);
     }
