@@ -28,7 +28,8 @@ else
 
     <QuickGrid Class="table" Items="context.WorkLogs
                                                 .Include(w => w.Task)
-                                                .Where(w => w.UserId == currentUser.Id)">
+                                                .Where(w => w.UserId == currentUser.Id)
+                                                .OrderBy(w => w.Date)">
         <TemplateColumn Context="worklog" Title="Date">
             @worklog.Date.ToShortDateString()
         </TemplateColumn>
