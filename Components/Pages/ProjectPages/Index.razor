@@ -9,44 +9,44 @@
 @implements IAsyncDisposable
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
 
-<PageTitle>All Projects</PageTitle>
+<PageTitle>Все проекты</PageTitle>
 
-<h1>All Projects</h1>
+<h1>Все проекты</h1>
 
 <p>
-    <a href="projects/create">Create New</a>
+    <a href="projects/create">Создать новый</a>
 </p>
 
 <QuickGrid Class="table" Items="context.Projects.Include(p => p.ProjectManager)">
-    <TemplateColumn Context="project" Title="Name">
+    <TemplateColumn Context="project" Title="Название">
         <a href="@($"projects/details?id={project.Id}")">@project.Name</a>
     </TemplateColumn>
-    <TemplateColumn Context="project" Title="Description">
+    <TemplateColumn Context="project" Title="Описание">
         @(!string.IsNullOrEmpty(project.Description)
             ? project.Description
-            : "-" )
+            : "-")
     </TemplateColumn>
-    <TemplateColumn Context="project" Title="Start Date">
-            @project.StartDate.ToShortDateString()
+    <TemplateColumn Context="project" Title="Дата начала">
+        @project.StartDate.ToShortDateString()
     </TemplateColumn>
-    <TemplateColumn Context="project" Title="End Date">
+    <TemplateColumn Context="project" Title="Дата окончания">
         @(project.EndDate is not null
             ? project.EndDate.Value.ToShortDateString()
-            : "-" )
+            : "-")
     </TemplateColumn>
-    <TemplateColumn Context="project" Title="Gitlab URL">
+    <TemplateColumn Context="project" Title="URL GitLab">
         @(!string.IsNullOrEmpty(project.GitlabUrl)
             ? project.GitlabUrl
-            : "-" )
+            : "-")
     </TemplateColumn>
-    <TemplateColumn Context="project" Title="Project Manager">
+    <TemplateColumn Context="project" Title="Руководитель проекта">
         @project.ProjectManager?.Fullname
     </TemplateColumn>
 
     <TemplateColumn Context="project">
-        <a href="@($"projects/edit?id={project.Id}")">Edit</a> |
-        <a href="@($"projects/details?id={project.Id}")">Details</a> |
-        <a href="@($"projects/delete?id={project.Id}")">Delete</a>
+        <a href="@($"projects/edit?id={project.Id}")">Редактировать</a> |
+        <a href="@($"projects/details?id={project.Id}")">Детали</a> |
+        <a href="@($"projects/delete?id={project.Id}")">Удалить</a>
     </TemplateColumn>
 </QuickGrid>
 

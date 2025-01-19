@@ -10,28 +10,28 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 
-<h3>Add user to project</h3>
+<h3>Добавить пользователя в проект</h3>
 
-<h3>User List</h3>
+<h3>Список пользователей</h3>
 
 @if (Users == null)
 {
-    <p>Loading...</p>
+    <p>Загрузка...</p>
 }
 else if (Users.Count == 0)
 {
-    <p>No users found.</p>
+    <p>Пользователи не найдены.</p>
 }
 else
 {
     <table border="1">
         <thead>
             <tr>
-                <th>Email</th>
-                <th>Lastname</th>
-                <th>Name</th>
-                <th>Patronymic</th>
-                <th>Role</th>
+                <th>Электронная почта</th>
+                <th>Фамилия</th>
+                <th>Имя</th>
+                <th>Отчество</th>
+                <th>Роль</th>
                 <th></th>
             </tr>
         </thead>
@@ -46,18 +46,18 @@ else
                     <td>@user.Role</td>
                     @if (Participants.Any(p => p.Id == user.Id))
                     {
-                        <td><button class="btn btn-primary" disabled>Already in project</button></td>
+                        <td><button class="btn btn-primary" disabled>Уже в проекте</button></td>
                     }
                     else
                     {
-                        <td><button class="btn btn-primary" @onclick="() => OnAddToProjectButtonClick(user)">Add to project</button></td>
+                        <td><button class="btn btn-primary" @onclick="() => OnAddToProjectButtonClick(user)">Добавить в проект</button></td>
                     }
                 </tr>
             }
         </tbody>
     </table>
 
-    <a href="@($"/projects/details?id={Id}")">Back to Project</a>
+    <a href="@($"/projects/details?id={Id}")">Назад к проекту</a>
 }
 
 @code {
