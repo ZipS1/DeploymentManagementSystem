@@ -13,7 +13,7 @@
 
 <h1>My projects</h1>
 
-@if (currentUserId is null)
+@if (!isLoadingFinished)
 {
     <p>Loading...</p>
 } 
@@ -32,21 +32,21 @@ else
         </TemplateColumn>
         <TemplateColumn Context="project" Title="Description">
             @(!string.IsNullOrEmpty(project.Description)
-                                    ? project.Description
-                                    : "-")
+                                            ? project.Description
+                                            : "-")
         </TemplateColumn>
         <TemplateColumn Context="project" Title="Start Date">
             @project.StartDate.ToShortDateString()
         </TemplateColumn>
         <TemplateColumn Context="project" Title="End Date">
             @(project.EndDate is not null
-                                    ? project.EndDate.Value.ToShortDateString()
-                                    : "-")
+                                            ? project.EndDate.Value.ToShortDateString()
+                                            : "-")
         </TemplateColumn>
         <TemplateColumn Context="project" Title="Gitlab URL">
             @(!string.IsNullOrEmpty(project.GitlabUrl)
-                                    ? project.GitlabUrl
-                                    : "-")
+                                            ? project.GitlabUrl
+                                            : "-")
         </TemplateColumn>
         <TemplateColumn Context="project" Title="Project Manager">
             @project.ProjectManager?.Fullname
@@ -58,6 +58,7 @@ else
     private ApplicationDbContext context = default!;
     private string? currentUserId;
     private bool isProjectsExist = false;
+    bool isLoadingFinished = false;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
@@ -70,7 +71,6 @@ else
         }
 
         var items = context.Projects
-                                .Include(p => p.ProjectManager)
                                 .Include(p => p.Participants)
                                 .Where(p => p.Participants!.Any(u => u.Id == currentUserId));
 
@@ -79,6 +79,7 @@ else
             isProjectsExist = true;
         }
 
+        isLoadingFinished = true;
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
