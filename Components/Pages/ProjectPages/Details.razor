@@ -49,6 +49,8 @@
                 <a href="@($"/projects")">Back to List</a>
             </div>
         </AuthorizeView>
+
+        <a href=@($"tasks?projectid={project!.Id}")>View project tasks</a>
     }
 </div>
 
