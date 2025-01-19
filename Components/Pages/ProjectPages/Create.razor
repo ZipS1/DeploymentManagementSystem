@@ -30,7 +30,7 @@
             </div>        
             <div class="mb-3">
                 <label for="description" class="form-label">Description:</label> 
-                <InputTextArea id="description" @bind-Value="Project.Description" class="form-control" /> 
+                <InputTextArea id="description" @bind-Value="Project.Description" @bind-Value:after="() => SetNullIfWhitespace(nameof(Project.Description))" class="form-control" /> 
                 <ValidationMessage For="() => Project.Description" class="text-danger" /> 
             </div>        
             <div class="mb-3">
@@ -50,16 +50,9 @@
                     <ValidationMessage For="() => Project.EndDate" class="text-danger" /> 
                 </div>        
             }
-            else
-            {
-                <div class="mb-3">
-                    <label for="enddate" class="form-label">EndDate:</label>
-                    <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" disabled />
-                </div>
-            }
             <div class="mb-3">
                 <label for="gitlaburl" class="form-label">GitlabUrl:</label> 
-                <InputText id="gitlaburl" @bind-Value="Project.GitlabUrl" class="form-control" /> 
+                <InputText id="gitlaburl" @bind-Value="Project.GitlabUrl" @bind-Value:after="() => SetNullIfWhitespace(nameof(Project.GitlabUrl))" class="form-control" />
                 <ValidationMessage For="() => Project.GitlabUrl" class="text-danger" /> 
             </div>        
             <div class="mb-3">
@@ -127,6 +120,20 @@
         if (isEndDateEnabled)
         {
             Project.EndDate = DateTime.Now.AddMonths(1);
+        }
+    }
+
+    private void SetNullIfWhitespace(string propertyName)
+    {
+        var value = typeof(Project).GetProperty(propertyName)!.GetValue(Project);
+        var stringValue = value?.ToString();
+        if (string.IsNullOrWhiteSpace(stringValue))
+        {
+            typeof(Project).GetProperty(propertyName)?.SetValue(Project, null);
+        }
+        else
+        {
+            typeof(Project).GetProperty(propertyName)?.SetValue(Project, stringValue);
         }
     }
 }

@@ -46,7 +46,7 @@ else
                 </div>
                 <div class="mb-3">
                     <label for="isenddateenabled" class="form-label">EndDate:</label>
-                    <InputCheckbox id="isenddateenabled" @bind-Value="isEndDateEnabled"></InputCheckbox>
+                    <InputCheckbox id="isenddateenabled" @bind-Value="isEndDateEnabled" @bind-Value:after="() => OnEndDateChange()"></InputCheckbox>
                 </div>
                 @if (isEndDateEnabled)
                 {
@@ -54,13 +54,6 @@ else
                         <label for="enddate" class="form-label">EndDate:</label>
                         <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" />
                         <ValidationMessage For="() => Project.EndDate" class="text-danger" />
-                    </div>
-                }
-                else
-                {
-                    <div class="mb-3">
-                        <label for="enddate" class="form-label">EndDate:</label>
-                        <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" disabled />
                     </div>
                 }
                 <div class="mb-3">
@@ -145,6 +138,14 @@ else
         }
 
         NavigationManager.NavigateTo("/projects");
+    }
+
+    private void OnEndDateChange()
+    {
+        if (isEndDateEnabled)
+        {
+            Project.EndDate = DateTime.Now.AddMonths(1);
+        }
     }
 
     private void SetNullIfWhitespace(string propertyName)
