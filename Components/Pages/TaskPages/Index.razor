@@ -32,17 +32,18 @@ else
                                                 .Include(t => t.TaskStatus)
                                                 .Include(a => a.AssignedUser)
                                                 .Include(c => c.CreatorUser)
-                                                .Where(t => t.ProjectId == ProjectId)">
+                                                .Where(t => t.ProjectId == ProjectId)
+                                                .OrderBy(t => t.CreationDate)">
         <PropertyColumn Property="task => task.Name" />
         <TemplateColumn Context="task" Title="Description">
             @(!string.IsNullOrEmpty(task.Description)
-                                                                        ? task.Description
-                                                                        : "-")
+                                                                                            ? task.Description
+                                                                                            : "-")
         </TemplateColumn>
         <TemplateColumn Context="task" Title="Due Date">
             @(task.DueDate is not null
-                                                                        ? task.DueDate.Value.ToShortDateString()
-                                                                        : "-")
+                                                                                            ? task.DueDate.Value.ToShortDateString()
+                                                                                            : "-")
         </TemplateColumn>
         <TemplateColumn Context="task" Title="Status">
             <InputSelect @bind-Value=task.TaskStatusId class="form-control" @bind-Value:after="() => OnTaskChange(task)">
@@ -65,15 +66,18 @@ else
             }
             else
             {
-                <InputSelect @bind-Value="task.AssignedUserId" class="form-control" @bind-Value:after="() => OnTaskChange(task)">
-                    @foreach (var participant in Participants)
-                    {
-                        if (participant.IsDataFullfilled)
+                <div class="d-inline-flex">
+                    <InputSelect @bind-Value="task.AssignedUserId" class="form-control" @bind-Value:after="() => OnTaskChange(task)">
+                        @foreach (var participant in Participants)
                         {
-                            <option value="@participant.Id">@participant.Fullname</option>
+                            if (participant.IsDataFullfilled)
+                            {
+                                <option value="@participant.Id">@participant.Fullname</option>
+                            }
                         }
-                    }
-                </InputSelect>
+                    </InputSelect>
+                    <button class="btn-sm btn-danger" @onclick="() => OnRemoveAsigneeClick(task)">-</button>
+                </div>
             }
         </TemplateColumn>
         <TemplateColumn Context="task" Title="Created at">
@@ -155,6 +159,16 @@ else
         var existingTask = context.Tasks.Find(task.Id)!;
 
         existingTask.AssignedUserId = currentUser!.Id;
+        context.SaveChanges();
+        NavigationManager.Refresh(forceReload: true);
+    }
+
+    private void OnRemoveAsigneeClick(Data.Models.Task task)
+    {
+        using var context = DbFactory.CreateDbContext();
+        var existingTask = context.Tasks.Find(task.Id)!;
+
+        existingTask.AssignedUserId = null;
         context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);
     }
