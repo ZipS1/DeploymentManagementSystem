@@ -16,6 +16,9 @@ namespace DeploymentManagementSystem.Data
 
             await EnsureRolesCreated(scope);
             await EnsureAdminCreated(scope);
+            await EnsureTaskStatusesCreated(scope);
+            await EnsureTaskTypesCreated(scope);
+            await EnsureTaskStatusTransitionsCreated(scope);
 
             return true;
         }
@@ -55,6 +58,83 @@ namespace DeploymentManagementSystem.Data
             await userManager.CreateAsync(rootUser);
             await userManager.AddPasswordAsync(rootUser, "admroot");
             await userManager.AddToRoleAsync(rootUser, "Admin");
+        }
+
+        private static async Task EnsureTaskStatusesCreated(AsyncServiceScope scope)
+        {
+            ApplicationDbContext context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            if (await context.TaskStatuses.AnyAsync())
+                return;
+
+            await context.TaskStatuses.AddRangeAsync([
+                new Models.TaskStatus { Name = "New" },
+                new Models.TaskStatus { Name = "Assigned" },
+                new Models.TaskStatus { Name = "In progress" },
+                new Models.TaskStatus { Name = "On review" },
+                new Models.TaskStatus { Name = "Needs revision" },
+                new Models.TaskStatus { Name = "Ready to deploy" },
+                new Models.TaskStatus { Name = "Deployment error" },
+                new Models.TaskStatus { Name = "Successfully deployed" },
+                new Models.TaskStatus { Name = "Finished" },
+            ]);
+
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task EnsureTaskTypesCreated(AsyncServiceScope scope)
+        {
+            ApplicationDbContext context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            int newTaskStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == "New"))!.Id;
+
+            if (await context.TaskTypes.AnyAsync())
+                return;
+
+            await context.TaskTypes.AddRangeAsync([
+                new Models.TaskType { Name = "Analysis", InitialTaskStatusId = newTaskStatusId },
+            ]);
+
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task EnsureTaskStatusTransitionsCreated(AsyncServiceScope scope)
+        {
+            ApplicationDbContext context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            List<Models.TaskStatus> statuses = await context.TaskStatuses.ToListAsync();
+
+            if (await context.TaskStatusTransitions.AnyAsync())
+                return;
+
+            int analysisTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == "Analysis"))!.Id;
+            await context.TaskStatusTransitions.AddRangeAsync([
+                new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
+                                                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Assigned")!.Id,
+                                                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "In progress")!.Id,
+                                                    AllowedRoles = "Assignee"
+                                                },
+                new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
+                                                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "In progress")!.Id,
+                                                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
+                                                    AllowedRoles = "Assignee"
+                                                },
+                new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
+                                                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
+                                                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Needs revision")!.Id,
+                                                    AllowedRoles = "ProjectManager,LeadDeveloper"
+                                                },
+                new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
+                                                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
+                                                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Finished")!.Id,
+                                                    AllowedRoles = "ProjectManager,LeadDeveloper"
+                                                },
+                new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
+                                                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Needs revision")!.Id,
+                                                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "In progress")!.Id,
+                                                    AllowedRoles = "Assignee"
+                                                },
+                ]);
+
+            await context.SaveChangesAsync();
         }
     }
 }
