@@ -35,9 +35,6 @@ else
                 ? task.Description
                 : "-")
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Creation Date">
-            @task.CreationDate.ToShortDateString()
-        </TemplateColumn>
         <TemplateColumn Context="task" Title="Due Date">
             @(task.DueDate is not null
                 ? task.DueDate.Value.ToShortDateString()
@@ -50,7 +47,10 @@ else
                 ? task.AssignedUser.Fullname
                 : "-")
         </TemplateColumn>
-        <PropertyColumn Property="task => task.CreatorUser!.Fullname" />
+        <TemplateColumn Context="task" Title="Created at">
+            @task.CreationDate.ToShortDateString()
+        </TemplateColumn>
+        <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Created by" />
 
         <TemplateColumn Context="task">
             <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Edit</a> |
