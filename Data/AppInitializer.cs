@@ -107,11 +107,6 @@ namespace DeploymentManagementSystem.Data
 
             int analysisTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == "Analysis"))!.Id;
             await context.TaskStatusTransitions.AddRangeAsync([
-                new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId, 
-                                                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "New")!.Id,
-                                                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Assigned")!.Id,
-                                                    AllowedRoles = "ProjectManager,LeadDeveloper"
-                                                },
                 new Models.TaskStatusTransition {   TaskTypeId = analysisTaskTypeId,
                                                     FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Assigned")!.Id,
                                                     ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "In progress")!.Id,
