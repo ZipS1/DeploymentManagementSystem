@@ -6,30 +6,35 @@
 @attribute [Authorize]
 @inject IdentityUserAccessor UserAccessor
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Главная</PageTitle>
 
-@if (!isLoadingFinished) {
-	<p>Loading...</p>
-} else if (!user.IsDataFullfilled) {
-	<p>Please fullfill your <a href="Account/Manage">profile</a> first</p>
-} else {
+@if (!isLoadingFinished)
+{
+	<p>Загрузка...</p>
+}
+else if (!user.IsDataFullfilled)
+{
+	<p>Пожалуйста, заполните ваш <a href="Account/Manage">профиль</a></p>
+}
+else
+{
 	<p>@greeting, @user.Lastname @user.Name @user.Patronymic</p>
 }
 
 <AuthorizeView Roles="NewUser">
-	<p>You are a new user, ask project manager to give you a role in system</p>
+	<p>Вы новый пользователь, обратитесь к руководителю проекта, чтобы получить роль в системе</p>
 </AuthorizeView>
 <AuthorizeView Roles="Admin">
-	<p>You are a superadmin</p>
+	<p>Вы супер-администратор</p>
 </AuthorizeView>
 <AuthorizeView Roles="ProjectManager">
-	<p>You are a project manager</p>
+	<p>Вы руководитель проекта</p>
 </AuthorizeView>
 <AuthorizeView Roles="Lead">
-	<p>You are a lead developer</p>
+	<p>Вы ведущий разработчик</p>
 </AuthorizeView>
 <AuthorizeView Roles="Developer">
-	<p>You are a developer</p>
+	<p>Вы разработчик</p>
 </AuthorizeView>
 
 @code {
@@ -45,19 +50,19 @@
 		int hour = DateTime.Now.Hour;
 		if (hour >= 23 || hour <= 3)
 		{
-			greeting = "Good night";
+			greeting = "Доброй ночи";
 		}
 		else if (3 < hour && hour < 11)
 		{
-			greeting = "Good morning";
+			greeting = "Доброе утро";
 		}
 		else if (11 <= hour && hour < 17)
 		{
-			greeting = "Good day";
+			greeting = "Добрый день";
 		}
 		else
 		{
-			greeting = "Good evening";
+			greeting = "Добрый вечер";
 		}
 
 		user = await UserAccessor.GetRequiredUserAsync(HttpContext);

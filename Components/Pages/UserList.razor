@@ -10,26 +10,26 @@
 @inject RoleManager<IdentityRole> RoleManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
-<h3>User List</h3>
+<h3>Список пользователей</h3>
 
 @if (Users == null)
 {
-    <p>Loading...</p>
+    <p>Загрузка...</p>
 }
 else if (Users.Count == 0)
 {
-    <p>No users found.</p>
+    <p>Пользователи не найдены.</p>
 }
 else
 {
     <table border="1">
         <thead>
             <tr>
-                <th>Email</th>
-                <th>Lastname</th>
-                <th>Name</th>
-                <th>Patronymic</th>
-                <th>Role</th>
+                <th>Электронная почта</th>
+                <th>Фамилия</th>
+                <th>Имя</th>
+                <th>Отчество</th>
+                <th>Роль</th>
             </tr>
         </thead>
         <tbody>
@@ -50,7 +50,8 @@ else
                                 }
                             </InputSelect>
                         }
-                        else {
+                        else
+                        {
                             <InputSelect @bind-Value="user.Role" @bind-Value:after="() => OnRoleChange(user)">
                                 @foreach (var role in Roles)
                                 {
@@ -59,7 +60,7 @@ else
                             </InputSelect>
                         }
                     </td>
-                    
+
                 </tr>
             }
         </tbody>

@@ -11,15 +11,15 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Редактировать</PageTitle>
 
-<h1>Edit</h1>
+<h1>Редактировать</h1>
 
-<h2>Project</h2>
+<h2>Проект</h2>
 <hr />
 @if (Project is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Загрузка...</em></p>
 }
 else
 {
@@ -27,44 +27,44 @@ else
         <div class="col-md-4">
             <EditForm method="post" Model="Project" OnValidSubmit="UpdateProject" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary role="alert" />
                 <input type="hidden" name="Project.Id" value="@Project.Id" />
                 <div class="mb-3">
-                    <label for="name" class="form-label">Name:</label>
+                    <label for="name" class="form-label">Название:</label>
                     <InputText id="name" @bind-Value="Project.Name" class="form-control" />
                     <ValidationMessage For="() => Project.Name" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="description" class="form-label">Description:</label>
+                    <label for="description" class="form-label">Описание:</label>
                     <InputTextArea id="description" @bind-Value="Project.Description" @bind-Value:after="() => SetNullIfWhitespace(nameof(Project.Description))" class="form-control" />
                     <ValidationMessage For="() => Project.Description" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="startdate" class="form-label">StartDate:</label>
+                    <label for="startdate" class="form-label">Дата начала:</label>
                     <InputDate id="startdate" @bind-Value="Project.StartDate" class="form-control" />
                     <ValidationMessage For="() => Project.StartDate" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="isenddateenabled" class="form-label">EndDate:</label>
+                    <label for="isenddateenabled" class="form-label">Дата окончания:</label>
                     <InputCheckbox id="isenddateenabled" @bind-Value="isEndDateEnabled" @bind-Value:after="() => OnEndDateChange()"></InputCheckbox>
                 </div>
                 @if (isEndDateEnabled)
                 {
                     <div class="mb-3">
-                        <label for="enddate" class="form-label">EndDate:</label>
+                        <label for="enddate" class="form-label">Дата окончания:</label>
                         <InputDate id="enddate" @bind-Value="Project.EndDate" class="form-control" />
                         <ValidationMessage For="() => Project.EndDate" class="text-danger" />
                     </div>
                 }
                 <div class="mb-3">
-                    <label for="gitlaburl" class="form-label">GitlabUrl:</label>
+                    <label for="gitlaburl" class="form-label">URL GitLab:</label>
                     <InputText id="gitlaburl" @bind-Value="Project.GitlabUrl" class="form-control" @bind-Value:after="() => SetNullIfWhitespace(nameof(Project.GitlabUrl))" />
                     <ValidationMessage For="() => Project.GitlabUrl" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="projectmanagerid" class="form-label">ProjectManager*:</label>
+                    <label for="projectmanagerid" class="form-label">Руководитель проекта*:</label>
                     <InputSelect id="projectmanagerid" @bind-Value="Project.ProjectManagerId" class="form-control">
-                        <option value="">Select a manager</option>
+                        <option value="">Выберите руководителя</option>
                         @foreach (var projectManager in ProjectManagers)
                         {
                             if (projectManager.IsDataFullfilled)
@@ -74,14 +74,14 @@ else
                         }
                     </InputSelect>
                 </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
             </EditForm>
         </div>
     </div>
 }
 
 <div>
-    <a href="/projects">Back to List</a>
+    <a href="/projects">Назад к списку</a>
 </div>
 
 @code {
@@ -109,8 +109,6 @@ else
         isEndDateEnabled = Project!.EndDate is not null;
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async System.Threading.Tasks.Task UpdateProject()
     {
         if (!isEndDateEnabled)

@@ -16,7 +16,6 @@ namespace DeploymentManagementSystem.Data.DataAnnotations
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            // reflection to get the properties from the model
             var startDateProp = validationContext.ObjectType.GetProperty(_startDatePropertyName);
             var endDateProp = validationContext.ObjectType.GetProperty(_endDatePropertyName);
 
@@ -36,11 +35,10 @@ namespace DeploymentManagementSystem.Data.DataAnnotations
             {
                 if (endDateValue.Value < startDateValue.Value)
                 {
-                    return new ValidationResult(ErrorMessage ?? $"{_endDatePropertyName} must be later than {_startDatePropertyName}.");
+                    return new ValidationResult(ErrorMessage ?? $"{_endDatePropertyName} должно быть позже {_startDatePropertyName}.");
                 }
             }
 
-            // If all is valid, return Success
             return ValidationResult.Success;
         }
     }

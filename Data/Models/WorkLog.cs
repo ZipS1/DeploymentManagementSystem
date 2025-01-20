@@ -8,7 +8,7 @@ namespace DeploymentManagementSystem.Data.Models
         public DateTime Date { get; set; }
 
         [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Not a valid time spent")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Некорректное значение для затраченного времени")]
         public decimal TimeSpent { get; set; }
 
         public int TaskId { get; set; }

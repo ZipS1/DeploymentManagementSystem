@@ -11,16 +11,16 @@
 @inject UserManager<ApplicationUser> UserManager
 @rendermode InteractiveServer
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Создать</PageTitle>
 
-<h1>Create</h1>
+<h1>Создать</h1>
 
-<h2>Task</h2>
+<h2>Задача</h2>
 <hr />
 
 @if (!isLoadingCompleted)
 {
-    <p>Loading...</p>
+    <p>Загрузка...</p>
 }
 else
 {
@@ -28,57 +28,57 @@ else
         <div class="col-md-4">
             <EditForm method="post" Model="Task" OnValidSubmit="AddTask" FormName="create" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger" role="alert"/>
+                <ValidationSummary class="text-danger" role="alert" />
                 <div class="mb-3">
-                    <label for="name" class="form-label">Name*:</label> 
-                    <InputText id="name" @bind-Value="Task.Name" class="form-control" /> 
-                    <ValidationMessage For="() => Task.Name" class="text-danger" /> 
+                    <label for="name" class="form-label">Название*:</label>
+                    <InputText id="name" @bind-Value="Task.Name" class="form-control" />
+                    <ValidationMessage For="() => Task.Name" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="description" class="form-label">Description:</label>
+                    <label for="description" class="form-label">Описание:</label>
                     <InputTextArea id="description" @bind-Value="Task.Description" @bind-Value:after="() => SetNullIfWhitespace(nameof(Task.Description))" class="form-control" />
-                    <ValidationMessage For="() => Task.Description" class="text-danger" /> 
+                    <ValidationMessage For="() => Task.Description" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="creationdate" class="form-label">CreationDate:</label> 
-                    <InputDate id="creationdate" @bind-Value="Task.CreationDate" class="form-control" disabled="True"/> 
-                    <ValidationMessage For="() => Task.CreationDate" class="text-danger" /> 
+                    <label for="creationdate" class="form-label">Дата создания:</label>
+                    <InputDate id="creationdate" @bind-Value="Task.CreationDate" class="form-control" disabled="True" />
+                    <ValidationMessage For="() => Task.CreationDate" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="isduedateenabled" class="form-label">DueDate:</label>
+                    <label for="isduedateenabled" class="form-label">Срок выполнения:</label>
                     <InputCheckbox id="isduedateenabled" @bind-Value="isDueDateEnabled" @bind-Value:after="() => OnDueDateChange()"></InputCheckbox>
                 </div>
                 @if (isDueDateEnabled)
                 {
                     <div class="mb-3">
-                        <label for="duedate" class="form-label">DueDate:</label> 
-                        <InputDate id="duedate" @bind-Value="Task.DueDate" class="form-control" /> 
-                        <ValidationMessage For="() => Task.DueDate" class="text-danger" /> 
-                    </div>        
+                        <label for="duedate" class="form-label">Срок выполнения:</label>
+                        <InputDate id="duedate" @bind-Value="Task.DueDate" class="form-control" />
+                        <ValidationMessage For="() => Task.DueDate" class="text-danger" />
+                    </div>
                 }
                 <div class="mb-3">
-                    <InputNumber id="taskstatusid" @bind-Value="Task.TaskStatusId" class="form-control" hidden /> 
-                    <ValidationMessage For="() => Task.TaskStatusId" class="text-danger" /> 
-                </div>        
+                    <InputNumber id="taskstatusid" @bind-Value="Task.TaskStatusId" class="form-control" hidden />
+                    <ValidationMessage For="() => Task.TaskStatusId" class="text-danger" />
+                </div>
                 <div class="mb-3">
-                    <label for="tasktypeid" class="form-label">TaskType*:</label> 
+                    <label for="tasktypeid" class="form-label">Тип задачи*:</label>
                     <InputSelect id="tasktypeid" @bind-Value="Task.TaskTypeId" class="form-control">
-                        <option value="">Select a task type</option>
+                        <option value="">Выберите тип задачи</option>
                         @foreach (var taskType in TaskTypes)
                         {
                             <option value="@taskType.Id">@taskType.Name</option>
                         }
                     </InputSelect>
-                    <ValidationMessage For="() => Task.TaskTypeId" class="text-danger" /> 
-                </div>        
+                    <ValidationMessage For="() => Task.TaskTypeId" class="text-danger" />
+                </div>
                 <div class="mb-3">
-                    <InputNumber id="projectid" @bind-Value="Task.ProjectId" class="form-control" hidden /> 
-                    <ValidationMessage For="() => Task.ProjectId" class="text-danger" /> 
-                </div>        
+                    <InputNumber id="projectid" @bind-Value="Task.ProjectId" class="form-control" hidden />
+                    <ValidationMessage For="() => Task.ProjectId" class="text-danger" />
+                </div>
                 <div class="mb-3">
-                    <label for="assigneduserid" class="form-label">AssignedUser:</label> 
+                    <label for="assigneduserid" class="form-label">Назначенный пользователь:</label>
                     <InputSelect id="assigneduserid" @bind-Value="Task.AssignedUserId" class="form-control">
-                        <option value="">None</option>
+                        <option value="">Нет</option>
                         @foreach (var participant in Participants)
                         {
                             if (participant.IsDataFullfilled)
@@ -87,19 +87,19 @@ else
                             }
                         }
                     </InputSelect>
-                    <ValidationMessage For="() => Task.AssignedUserId" class="text-danger" /> 
-                </div>        
+                    <ValidationMessage For="() => Task.AssignedUserId" class="text-danger" />
+                </div>
                 <div class="mb-3">
-                    <InputText id="creatoruserid" @bind-Value="Task.CreatorUserId" class="form-control" hidden /> 
-                    <ValidationMessage For="() => Task.CreatorUserId" class="text-danger" /> 
-                </div>        
-                <button type="submit" class="btn btn-primary">Create</button>
+                    <InputText id="creatoruserid" @bind-Value="Task.CreatorUserId" class="form-control" hidden />
+                    <ValidationMessage For="() => Task.CreatorUserId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Создать</button>
             </EditForm>
         </div>
     </div>
 
     <div>
-        <a href=@($"tasks?projectid={ProjectId}")>Back to List</a>
+        <a href=@($"tasks?projectid={ProjectId}")>Назад к списку</a>
     </div>
 }
 
@@ -143,7 +143,6 @@ else
         isLoadingCompleted = true;
     }
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async System.Threading.Tasks.Task AddTask()
     {
         using var context = DbFactory.CreateDbContext();

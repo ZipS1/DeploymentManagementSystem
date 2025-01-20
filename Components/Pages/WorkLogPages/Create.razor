@@ -7,18 +7,18 @@
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Create</PageTitle>
-<h1>Create</h1>
-<h2>WorkLog</h2>
+<PageTitle>Создать</PageTitle>
+<h1>Создать</h1>
+<h2>Трудозатраты</h2>
 <hr />
 
 @if (!isLoadingFinished)
 {
-    <h4>Loading...</h4>
+    <h4>Загрузка...</h4>
 }
 else if (!isTasksExist)
 {
-    <p> You have no tasks in progress assigned to you</p>
+    <p>У вас нет задач в статусе "In progress" для добавления трудозатрат</p>
 }
 else
 {
@@ -26,19 +26,19 @@ else
         <div class="col-md-4">
             <EditForm method="post" Model="WorkLog" OnValidSubmit="AddWorkLog" FormName="create" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger" role="alert"/>
+                <ValidationSummary class="text-danger" role="alert" />
                 <div class="mb-3">
-                    <label for="date" class="form-label">Date:</label> 
-                    <InputDate id="date" @bind-Value="WorkLog.Date" class="form-control" /> 
-                    <ValidationMessage For="() => WorkLog.Date" class="text-danger" /> 
-                </div>        
+                    <label for="date" class="form-label">Дата:</label>
+                    <InputDate id="date" @bind-Value="WorkLog.Date" class="form-control" />
+                    <ValidationMessage For="() => WorkLog.Date" class="text-danger" />
+                </div>
                 <div class="mb-3">
-                    <label for="timespent" class="form-label">TimeSpent:</label> 
-                    <InputNumber id="timespent" @bind-Value="WorkLog.TimeSpent" class="form-control" /> 
-                    <ValidationMessage For="() => WorkLog.TimeSpent" class="text-danger" /> 
-                </div>        
+                    <label for="timespent" class="form-label">Потраченное время:</label>
+                    <InputNumber id="timespent" @bind-Value="WorkLog.TimeSpent" class="form-control" />
+                    <ValidationMessage For="() => WorkLog.TimeSpent" class="text-danger" />
+                </div>
                 <div class="mb-3">
-                    <label for="taskid" class="form-label">Task:</label>
+                    <label for="taskid" class="form-label">Задача:</label>
                     @if (TaskId is not null)
                     {
                         <InputSelect id="taskid" @bind-Value="WorkLog.TaskId" class="form-control" disabled>
@@ -57,19 +57,19 @@ else
                             }
                         </InputSelect>
                     }
-                    <ValidationMessage For="() => WorkLog.TaskId" class="text-danger" /> 
-                </div>        
+                    <ValidationMessage For="() => WorkLog.TaskId" class="text-danger" />
+                </div>
                 <div class="mb-3">
-                    <InputText id="userid" @bind-Value="WorkLog.UserId" class="form-control" hidden /> 
-                    <ValidationMessage For="() => WorkLog.UserId" class="text-danger" /> 
-                </div>        
-                <button type="submit" class="btn btn-primary">Create</button>
+                    <InputText id="userid" @bind-Value="WorkLog.UserId" class="form-control" hidden />
+                    <ValidationMessage For="() => WorkLog.UserId" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Создать</button>
             </EditForm>
         </div>
     </div>
 
     <div>
-        <a href=@($"/worklogs?userid={UserId}")>Back to List</a>
+        <a href=@($"/worklogs?userid={UserId}")>Назад к списку</a>
     </div>
 }
 
@@ -114,7 +114,6 @@ else
         isLoadingFinished = true;
     }
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async System.Threading.Tasks.Task AddWorkLog()
     {
         using var context = DbFactory.CreateDbContext();

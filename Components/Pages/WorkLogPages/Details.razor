@@ -7,31 +7,32 @@
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Детали</PageTitle>
 
-<h1>Details</h1>
+<h1>Детали</h1>
 
 <div>
-    <h2>WorkLog</h2>
+    <h2>Трудозатраты</h2>
     <hr />
     @if (worklog is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>Загрузка...</em></p>
     }
-    else {
+    else
+    {
         <dl class="row">
-            <dt class="col-sm-2">Date</dt>
+            <dt class="col-sm-2">Дата</dt>
             <dd class="col-sm-10">@worklog.Date</dd>
-            <dt class="col-sm-2">TimeSpent</dt>
+            <dt class="col-sm-2">Потраченное время</dt>
             <dd class="col-sm-10">@worklog.TimeSpent</dd>
-            <dt class="col-sm-2">TaskId</dt>
+            <dt class="col-sm-2">ID задачи</dt>
             <dd class="col-sm-10">@worklog.TaskId</dd>
-            <dt class="col-sm-2">UserId</dt>
+            <dt class="col-sm-2">ID пользователя</dt>
             <dd class="col-sm-10">@worklog.UserId</dd>
         </dl>
         <div>
-            <a href="@($"/worklogs/edit?id={worklog.Id}")">Edit</a> |
-            <a href="@($"/worklogs")">Back to List</a>
+            <a href="@($"/worklogs/edit?id={worklog.Id}")">Редактировать</a> |
+            <a href="@($"/worklogs")">Назад к списку</a>
         </div>
     }
 </div>
