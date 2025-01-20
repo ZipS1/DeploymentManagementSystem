@@ -57,7 +57,7 @@ else
             </InputSelect>
             @if (task.TaskStatus!.Name == "In progress")
             {
-                <a class="btn-sm btn-primary" href=@($"worklogs/create?userid={currentUser!.Id}&taskid={task.Id}")>Добавить трудозатраты</a>
+                <a class="btn-sm btn-primary" href=@($"worklogs/create?userid={currentUser!.Id}&taskid={task.Id}")>Добавить</a>
             }
         </TemplateColumn>
         <PropertyColumn Property="task => task.TaskType!.Name" Title="Тип" />
