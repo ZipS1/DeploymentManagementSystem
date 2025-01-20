@@ -16,19 +16,19 @@
 
 @if (!isLoadingCompleted)
 {
-    <PageTitle>"Loading tasks..."</PageTitle>
-    <h1>"Loading tasks..."</h1>
+    <PageTitle>"Загрузка задач..."</PageTitle>
+    <h1>"Загрузка задач..."</h1>
 }
 else
 {
-    <PageTitle>@($"\"{projectName}\" tasks") </PageTitle>
-    <h1>@($"\"{projectName}\" tasks")</h1>
-    <p>Total worklogs: @(FetchWorklogsForProject()) h</p>
+    <PageTitle>@($"\"{projectName}\" задачи") </PageTitle>
+    <h1>@($"\"{projectName}\" задачи")</h1>
+    <p>Общее время трудозатрат: @(FetchWorklogsForProject()) ч</p>
 
-    <a href=@($"projects/details?id={ProjectId}")>Back to project</a>
+    <a href=@($"projects/details?id={ProjectId}")>Назад к проекту</a>
     <AuthorizeView Roles="Admin,ProjectManager,Lead">
         <p>
-            <a href=@($"tasks/create?projectid={ProjectId}")>Create New</a>
+            <a href=@($"tasks/create?projectid={ProjectId}")>Создать новую задачу</a>
         </p>
     </AuthorizeView>
 
@@ -39,18 +39,18 @@ else
                                                 .Include(c => c.CreatorUser)
                                                 .Where(t => t.ProjectId == ProjectId)
                                                 .OrderBy(t => t.CreationDate)">
-        <PropertyColumn Property="task => task.Name" />
-        <TemplateColumn Context="task" Title="Description">
+        <PropertyColumn Property="task => task.Name" Title="Название" />
+        <TemplateColumn Context="task" Title="Описание">
             @(!string.IsNullOrEmpty(task.Description)
-                                                                                                    ? task.Description
-                                                                                                    : "-")
+                ? task.Description
+                : "-")
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Due Date">
+        <TemplateColumn Context="task" Title="Срок выполнения">
             @(task.DueDate is not null
-                                                                                                    ? task.DueDate.Value.ToShortDateString()
-                                                                                                    : "-")
+                ? task.DueDate.Value.ToShortDateString()
+                : "-")
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Status">
+        <TemplateColumn Context="task" Title="Статус">
             <InputSelect @bind-Value=task.TaskStatusId class="form-control" @bind-Value:after="() => OnTaskChange(task)">
                 @foreach (var status in TaskStatuses)
                 {
@@ -62,17 +62,17 @@ else
                 }
             </InputSelect>
         </TemplateColumn>
-        <PropertyColumn Property="task => task.TaskType!.Name" Title="Type" />
-        <TemplateColumn Context="task" Title="Assigned">
+        <PropertyColumn Property="task => task.TaskType!.Name" Title="Тип" />
+        <TemplateColumn Context="task" Title="Назначено">
             <AuthorizeView Roles="Developer">
                 @(task.AssignedUserId is not null
-                            ? task.AssignedUser!.Fullname
-                            : "-")
+                    ? task.AssignedUser!.Fullname
+                    : "-")
             </AuthorizeView>
             <AuthorizeView Roles="Admin,ProjectManager,Lead">
                 @if (task.AssignedUserId is null)
                 {
-                    <button class="btn btn-primary" @onclick="() => OnAssignToTaskClick(task)">Add assignee</button>
+                    <button class="btn btn-primary" @onclick="() => OnAssignToTaskClick(task)">Добавить исполнителя</button>
                 }
                 else
                 {
@@ -91,23 +91,24 @@ else
                 }
             </AuthorizeView>
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Worklogs">
+        <TemplateColumn Context="task" Title="Трудозатраты">
             @FetchWorklogsForTask(task)
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Created at">
+        <TemplateColumn Context="task" Title="Дата создания">
             @task.CreationDate.ToShortDateString()
         </TemplateColumn>
-        <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Created by" />
+        <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Создано пользователем" />
 
         <TemplateColumn Context="task">
             <AuthorizeView Roles="Admin,ProjectManager,Lead">
-                <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Edit</a> |
-                <a href="@($"tasks/delete?id={task.Id}&projectid={ProjectId}")">Delete</a>
+                <a href="@($"tasks/edit?id={task.Id}&projectid={ProjectId}")">Редактировать</a> |
+                <a href="@($"tasks/delete?id={task.Id}&projectid={ProjectId}")">Удалить</a>
             </AuthorizeView>
         </TemplateColumn>
     </QuickGrid>
+}
 
-    @code {
+@code {
     private ApplicationDbContext context = default!;
     private ApplicationUser? currentUser;
     private List<ApplicationUser> Participants = new();
@@ -203,5 +204,4 @@ else
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
-    }
 }
