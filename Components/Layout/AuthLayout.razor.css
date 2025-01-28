@@ -23,6 +23,7 @@ article.content {
 
     margin: 0;
     max-width: 500px; /* Optional: Restrict width */
+    min-width: 300px;
     width: 100%; /* Ensure it is responsive */
 }
 
