@@ -109,10 +109,19 @@ else
                 @FetchWorklogsForTask(task)
             </ChildContent>
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Дата создания">
-            @task.CreationDate.ToShortDateString()
+        <TemplateColumn Context="task">
+            <HeaderTemplate>
+                <div class="table-small-header">Дата создания</div>
+            </HeaderTemplate>
+            <ChildContent>
+                @task.CreationDate.ToShortDateString()
+            </ChildContent>
         </TemplateColumn>
-        <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Создано пользователем" />
+        <PropertyColumn Property="task => task.CreatorUser!.Fullname">
+            <HeaderTemplate>
+                <div class="table-small-header">Создано пользователем</div>
+            </HeaderTemplate>
+        </PropertyColumn>
 
         <TemplateColumn Context="task">
             <AuthorizeView Roles="Admin,ProjectManager,Lead">
