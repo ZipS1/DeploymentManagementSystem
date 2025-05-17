@@ -1,5 +1,6 @@
 ﻿@page "/MyTasks"
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.AspNetCore.Identity
@@ -51,7 +52,7 @@ else
                     var allowedStatusIds = FetchAllowedStatusIds(task, currentUser!);
                     @if (allowedStatusIds.Any(t => t == status.Id))
                     {
-                        <option value="@status.Id">@status.Name</option>
+                        <option value="@status.Id">@status.GetTranslation()</option>
                     }
                 }
             </InputSelect>

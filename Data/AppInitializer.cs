@@ -11,6 +11,11 @@ namespace DeploymentManagementSystem.Data
             var builder = new DbContextOptionsBuilder<ApplicationDbContext>(options);
 
             using var context = new ApplicationDbContext(builder.Options);
+
+#if FLUSH_ON_START
+            await context.Database.EnsureDeletedAsync();
+#endif
+
             if (!context.Database.EnsureCreated())
                 return false;
 

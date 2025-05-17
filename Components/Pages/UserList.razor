@@ -1,6 +1,7 @@
 ﻿@page "/Users"
 @using DeploymentManagementSystem.Components.Account
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @attribute [Authorize(Roles = "Admin,ProjectManager")]
@@ -46,7 +47,7 @@ else
                             <InputSelect @bind-Value="user.Role" @bind-Value:after="() => OnRoleChange(user)" disabled="true">
                                 @foreach (var role in Roles)
                                 {
-                                    <option value="@role.Name">@role.Name</option>
+                                    <option value="@role.Name">@role.GetTranslation()</option>
                                 }
                             </InputSelect>
                         }
@@ -55,7 +56,7 @@ else
                             <InputSelect @bind-Value="user.Role" @bind-Value:after="() => OnRoleChange(user)">
                                 @foreach (var role in Roles)
                                 {
-                                    <option value="@role.Name">@role.Name</option>
+                                    <option value="@role.Name">@role.GetTranslation()</option>
                                 }
                             </InputSelect>
                         }

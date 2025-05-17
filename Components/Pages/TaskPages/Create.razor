@@ -1,5 +1,6 @@
 ﻿@page "/tasks/create"
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -66,7 +67,7 @@ else
                         <option value="">Выберите тип задачи</option>
                         @foreach (var taskType in TaskTypes)
                         {
-                            <option value="@taskType.Id">@taskType.Name</option>
+                            <option value="@taskType.Id">@taskType.GetTranslation()</option>
                         }
                     </InputSelect>
                     <ValidationMessage For="() => Task.TaskTypeId" class="text-danger" />

@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -43,7 +44,7 @@ else
                     <td>@user.Lastname</td>
                     <td>@user.Name</td>
                     <td>@user.Patronymic</td>
-                    <td>@user.Role</td>
+                    <td>@user.GetRoleTranslation()</td>
                     @if (Participants.Any(p => p.Id == user.Id))
                     {
                         <td><button class="btn btn-primary" disabled>Уже в проекте</button></td>
