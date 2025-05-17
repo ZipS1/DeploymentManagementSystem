@@ -30,6 +30,7 @@ else
     <h1>Созданные задачи</h1>
     <QuickGrid Class="table" Items="@Tasks!.Where(c => c.CreatorUserId == currentUser!.Id && c.AssignedUserId != currentUser!.Id).AsQueryable()">
         <PropertyColumn Property="task => task.Name" Title="Название" />
+        <PropertyColumn Property="task => task.Project!.Name" Title="Проект" />
         <TemplateColumn Context="task" Title="Описание">
             @(!string.IsNullOrEmpty(task.Description)
                 ? task.Description
@@ -62,15 +63,25 @@ else
                 ? task.AssignedUser!.Fullname
                 : "-")
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Дата создания">
-            @task.CreationDate.ToShortDateString()
+        <TemplateColumn Context="task">
+            <HeaderTemplate>
+                <div class="table-small-header">Дата создания</div>
+            </HeaderTemplate>
+            <ChildContent>
+                @task.CreationDate.ToShortDateString()
+            </ChildContent>
         </TemplateColumn>
-        <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Создано пользователем" />
+        <PropertyColumn Property="task => task.CreatorUser!.Fullname">
+            <HeaderTemplate>
+                <div class="table-small-header">Создано пользователем</div>
+            </HeaderTemplate>
+        </PropertyColumn>
     </QuickGrid>
 
     <h1>Назначенные задачи</h1>
 <QuickGrid Class="table" Items="@Tasks!.Where(c => c.AssignedUserId == currentUser!.Id).AsQueryable()">
     <PropertyColumn Property="task => task.Name" Title="Название" />
+    <PropertyColumn Property="task => task.Project!.Name" Title="Проект" />
     <TemplateColumn Context="task" Title="Описание">
         @(!string.IsNullOrEmpty(task.Description)
                 ? task.Description
@@ -103,10 +114,19 @@ else
                 ? task.AssignedUser!.Fullname
                 : "-")
     </TemplateColumn>
-    <TemplateColumn Context="task" Title="Дата создания">
-        @task.CreationDate.ToShortDateString()
+    <TemplateColumn Context="task">
+        <HeaderTemplate>
+            <div class="table-small-header">Дата создания</div>
+        </HeaderTemplate>
+        <ChildContent>
+            @task.CreationDate.ToShortDateString()
+        </ChildContent>
     </TemplateColumn>
-    <PropertyColumn Property="task => task.CreatorUser!.Fullname" Title="Создано пользователем" />
+    <PropertyColumn Property="task => task.CreatorUser!.Fullname">
+        <HeaderTemplate>
+            <div class="table-small-header">Создано пользователем</div>
+        </HeaderTemplate>
+    </PropertyColumn>
 </QuickGrid>
 }
 
@@ -128,6 +148,7 @@ else
         TaskStatuses = await context.TaskStatuses.ToListAsync();
 
         Tasks = context.Tasks
+            .Include(t => t.Project)
             .Include(t => t.TaskType)
             .Include(t => t.TaskStatus)
             .Include(a => a.AssignedUser)
