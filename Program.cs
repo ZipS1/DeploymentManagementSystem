@@ -28,13 +28,11 @@ var connectionString = builder.Configuration
                                     .GetConnectionString("DefaultConnection")?
                                     .Replace("${PG_PASSWORD}", Environment.GetEnvironmentVariable("PG_PASSWORD"));
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString), ServiceLifetime.Scoped
-);
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options
         .UseNpgsql(connectionString)
-        .EnableDetailedErrors());
+        .EnableDetailedErrors(),
+    ServiceLifetime.Scoped
+);
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();

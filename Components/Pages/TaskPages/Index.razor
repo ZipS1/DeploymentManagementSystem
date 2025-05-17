@@ -8,7 +8,6 @@
 @using DeploymentManagementSystem.Data
 
 @attribute [Authorize(Roles = "Admin,ProjectManager,Lead,Developer")]
-@implements IAsyncDisposable
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
@@ -218,6 +217,4 @@ else
         context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);
     }
-
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }
