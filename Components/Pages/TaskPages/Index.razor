@@ -209,9 +209,13 @@ else
     private void OnAssignToTaskClick(Data.Models.Task task)
     {
         using var context = DbFactory.CreateDbContext();
-        var existingTask = context.Tasks.Find(task.Id)!;
+        var existingTask = context.Tasks.Include(s => s.TaskStatus).First(t => t.Id == task.Id)!;
 
         existingTask.AssignedUserId = currentUser!.Id;
+        if (existingTask.TaskStatus!.Name == "New" && existingTask.AssignedUserId is not null)
+        {
+            existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "Assigned")!.Id;
+        }
         context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);
     }
@@ -219,10 +223,13 @@ else
     private void OnRemoveAsigneeClick(Data.Models.Task task)
     {
         using var context = DbFactory.CreateDbContext();
-        var existingTask = context.Tasks.Find(task.Id)!;
+        var existingTask = context.Tasks.Include(t => t.TaskStatus).First(t => t.Id == task.Id)!;
 
         existingTask.AssignedUserId = null;
-        existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "New")!.Id;
+        if (existingTask.TaskStatus!.Name == "Assigned")
+        {
+            existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "New")!.Id;
+        }
         context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);
     }
