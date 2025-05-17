@@ -41,15 +41,25 @@ else
                                                 .Where(t => t.ProjectId == ProjectId)
                                                 .OrderBy(t => t.CreationDate)">
         <PropertyColumn Property="task => task.Name" Title="Название" />
-        <TemplateColumn Context="task" Title="Описание">
-            @(!string.IsNullOrEmpty(task.Description)
-                ? task.Description
-                : "-")
+        <TemplateColumn Context="task">
+            <HeaderTemplate>
+                <div class="table-small-header">Описание</div>
+            </HeaderTemplate>
+            <ChildContent>
+                @(!string.IsNullOrEmpty(task.Description)
+                    ? task.Description
+                    : "-")
+            </ChildContent>
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Срок выполнения">
-            @(task.DueDate is not null
-                ? task.DueDate.Value.ToShortDateString()
-                : "-")
+        <TemplateColumn Context="task">
+            <HeaderTemplate>
+                <div class="table-small-header">Срок<br/>выполнения</div>
+            </HeaderTemplate>
+            <ChildContent>
+                @(task.DueDate is not null
+                    ? task.DueDate.Value.ToShortDateString()
+                    : "-")
+            </ChildContent>
         </TemplateColumn>
         <TemplateColumn Context="task" Title="Статус">
             <InputSelect @bind-Value=task.TaskStatusId class="form-control" @bind-Value:after="() => OnTaskChange(task)">
@@ -92,8 +102,13 @@ else
                 }
             </AuthorizeView>
         </TemplateColumn>
-        <TemplateColumn Context="task" Title="Трудозатраты">
-            @FetchWorklogsForTask(task)
+        <TemplateColumn Context="task">
+            <HeaderTemplate>
+                <div class="table-small-header">Трудозатраты</div>
+            </HeaderTemplate>
+            <ChildContent>
+                @FetchWorklogsForTask(task)
+            </ChildContent>
         </TemplateColumn>
         <TemplateColumn Context="task" Title="Дата создания">
             @task.CreationDate.ToShortDateString()
