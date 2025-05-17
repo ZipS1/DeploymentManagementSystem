@@ -33,18 +33,6 @@
             <dt class="col-sm-2">Дата начала</dt>
             <dd class="col-sm-10">@project.StartDate</dd>
         </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Дата окончания</dt>
-            <dd class="col-sm-10">@project.EndDate</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">URL Gitlab</dt>
-            <dd class="col-sm-10">@project.GitlabUrl</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">ID руководителя проекта</dt>
-            <dd class="col-sm-10">@project.ProjectManagerId</dd>
-        </dl>
         <EditForm method="post" Model="project" OnValidSubmit="DeleteProject" FormName="delete" Enhance>
             <button type="submit" class="btn btn-danger" disabled="@(project is null)">Удалить</button> |
             <a href="/projects">Назад к списку</a>
