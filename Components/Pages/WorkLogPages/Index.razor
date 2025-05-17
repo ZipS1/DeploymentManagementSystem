@@ -1,4 +1,5 @@
 ﻿@page "/worklogs"
+@using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -35,7 +36,7 @@ else
         </TemplateColumn>
         <PropertyColumn Property="worklog => worklog.TimeSpent" Title="Потраченное время" />
         <TemplateColumn Context="worklog" Title="Задача">
-            @worklog.Task!.Name
+            @worklog.Task!.Name.GetTaskTypeTranslation()
         </TemplateColumn>
 
         <TemplateColumn Context="worklog">

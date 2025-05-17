@@ -61,7 +61,7 @@ else
                 <a class="btn-sm btn-primary" href=@($"worklogs/create?userid={currentUser!.Id}&taskid={task.Id}")>Добавить</a>
             }
         </TemplateColumn>
-        <PropertyColumn Property="task => task.TaskType!.Name" Title="Тип" />
+        <PropertyColumn Property="task => task.TaskType!.GetTranslation()" Title="Тип" />
         <TemplateColumn Context="task" Title="Назначено">
             @(task.AssignedUserId is not null
                 ? task.AssignedUser!.Fullname
