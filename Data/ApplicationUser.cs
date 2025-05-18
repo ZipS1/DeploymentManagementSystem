@@ -1,3 +1,4 @@
+using DeploymentManagementSystem.Data.DomainStringConstants;
 using DeploymentManagementSystem.Data.Models;
 using Microsoft.AspNetCore.Identity;
 
@@ -10,7 +11,7 @@ namespace DeploymentManagementSystem.Data
         public string? Name { get; set; }
         public string? Patronymic { get; set; }
         public bool IsDataFullfilled { get; set; } = false;
-        public string Role { get; set; } = "NewUser";
+        public string Role { get; set; } = RoleConstants.NewUser;
 
         public ICollection<Project>? Projects { get; set; }
 

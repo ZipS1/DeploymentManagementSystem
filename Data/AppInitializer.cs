@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using DeploymentManagementSystem.Data.DomainStringConstants;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeploymentManagementSystem.Data
@@ -31,7 +32,7 @@ namespace DeploymentManagementSystem.Data
         private static async Task EnsureRolesCreated(AsyncServiceScope scope)
         {
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var roles = new[] { "Admin", "NewUser", "ProjectManager", "Developer", "Lead" };
+            var roles = new[] { RoleConstants.Admin, RoleConstants.NewUser, RoleConstants.ProjectManager, RoleConstants.Developer, RoleConstants.LeadDeveloper };
 
             foreach (var role in roles)
             {
@@ -45,7 +46,7 @@ namespace DeploymentManagementSystem.Data
         private static async Task EnsureAdminCreated(AsyncServiceScope scope)
         {
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            if ((await userManager.GetUsersInRoleAsync("Admin")).Any())
+            if ((await userManager.GetUsersInRoleAsync(RoleConstants.Admin)).Any())
                 return;
 
             var rootUser = new ApplicationUser()
@@ -57,12 +58,12 @@ namespace DeploymentManagementSystem.Data
                 Lastname = "root",
                 Name = "root",
                 Patronymic = "root",
-                Role = "Admin",
+                Role = RoleConstants.Admin,
             };
 
             await userManager.CreateAsync(rootUser);
             await userManager.AddPasswordAsync(rootUser, "admroot");
-            await userManager.AddToRoleAsync(rootUser, "Admin");
+            await userManager.AddToRoleAsync(rootUser, RoleConstants.Admin);
         }
 
         private static async Task EnsureTaskStatusesCreated(AsyncServiceScope scope)
@@ -74,15 +75,15 @@ namespace DeploymentManagementSystem.Data
 
             var statuses = new List<Models.TaskStatus>
             {
-                new Models.TaskStatus { Name = "New" },
-                new Models.TaskStatus { Name = "Assigned" },
-                new Models.TaskStatus { Name = "In progress" },
-                new Models.TaskStatus { Name = "On review" },
-                new Models.TaskStatus { Name = "Needs revision" },
-                new Models.TaskStatus { Name = "Ready to deploy" },
-                new Models.TaskStatus { Name = "Deployment error" },
-                new Models.TaskStatus { Name = "Successfully deployed" },
-                new Models.TaskStatus { Name = "Finished" },
+                new Models.TaskStatus { Name = TaskStatusConstants.New },
+                new Models.TaskStatus { Name = TaskStatusConstants.Assigned },
+                new Models.TaskStatus { Name = TaskStatusConstants.InProgress },
+                new Models.TaskStatus { Name = TaskStatusConstants.OnReview },
+                new Models.TaskStatus { Name = TaskStatusConstants.NeedsRevision },
+                new Models.TaskStatus { Name = TaskStatusConstants.ReadyToDeploy },
+                new Models.TaskStatus { Name = TaskStatusConstants.DeploymentError },
+                new Models.TaskStatus { Name = TaskStatusConstants.SuccessfullyDeployed },
+                new Models.TaskStatus { Name = TaskStatusConstants.Finished },
             };
 
             await context.TaskStatuses.AddRangeAsync(statuses);
@@ -92,14 +93,14 @@ namespace DeploymentManagementSystem.Data
         private static async Task EnsureTaskTypesCreated(AsyncServiceScope scope)
         {
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            int newTaskStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == "New"))!.Id;
+            int newTaskStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == TaskStatusConstants.New))!.Id;
 
             if (await context.TaskTypes.AnyAsync())
                 return;
 
             var types = new List<Models.TaskType>
             {
-                new Models.TaskType { Name = "Analysis", InitialTaskStatusId = newTaskStatusId },
+                new Models.TaskType { Name = TaskTypeConstants.Analysis, InitialTaskStatusId = newTaskStatusId },
             };
 
             await context.TaskTypes.AddRangeAsync(types);
@@ -114,38 +115,38 @@ namespace DeploymentManagementSystem.Data
             if (await context.TaskStatusTransitions.AnyAsync())
                 return;
 
-            int analysisTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == "Analysis"))!.Id;
+            int analysisTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == TaskTypeConstants.Analysis))!.Id;
             var transitions = new List<Models.TaskStatusTransition>
             {
                 new Models.TaskStatusTransition {
                     TaskTypeId = analysisTaskTypeId,
-                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Assigned")!.Id,
-                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "In progress")!.Id,
-                    AllowedRoles = "Assignee"
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Assigned)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    AllowedRoles = RoleConstants.Assignee
                 },
                 new Models.TaskStatusTransition {
                     TaskTypeId = analysisTaskTypeId,
-                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "In progress")!.Id,
-                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
-                    AllowedRoles = "Assignee"
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    AllowedRoles = RoleConstants.Assignee
                 },
                 new Models.TaskStatusTransition {
                     TaskTypeId = analysisTaskTypeId,
-                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
-                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Needs revision")!.Id,
-                    AllowedRoles = "ProjectManager,Lead"
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
                 },
                 new Models.TaskStatusTransition {
                     TaskTypeId = analysisTaskTypeId,
-                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "On review")!.Id,
-                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Finished")!.Id,
-                    AllowedRoles = "ProjectManager,Lead"
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Finished)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
                 },
                 new Models.TaskStatusTransition {
                     TaskTypeId = analysisTaskTypeId,
-                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == "Needs revision")!.Id,
-                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == "In progress")!.Id,
-                    AllowedRoles = "Assignee"
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    AllowedRoles = RoleConstants.Assignee,
                 },
             };
 

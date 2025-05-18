@@ -1,4 +1,5 @@
 ﻿@page "/worklogs/edit"
+@using DeploymentManagementSystem.Data.DomainStringConstants
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using DeploymentManagementSystem.Data.Models
@@ -76,7 +77,7 @@ else
         using var context = DbFactory.CreateDbContext();
         WorkLog ??= await context.WorkLogs.FirstOrDefaultAsync(m => m.Id == Id);
 
-        var inProgressStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == "In progress"))!.Id;
+        var inProgressStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == TaskStatusConstants.InProgress))!.Id;
         Tasks = await context.Tasks
                             .Where(t => t.AssignedUserId == UserId)
                             .Where(t => t.TaskStatusId == inProgressStatusId)

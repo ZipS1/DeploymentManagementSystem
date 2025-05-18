@@ -1,5 +1,6 @@
 ﻿@page "/projects/edit"
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Data.DomainStringConstants
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -96,7 +97,7 @@ else
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
-        ProjectManagers = UserManager.Users.Where(u => u.Role == "ProjectManager").ToList();
+        ProjectManagers = UserManager.Users.Where(u => u.Role == RoleConstants.ProjectManager).ToList();
 
         using var context = DbFactory.CreateDbContext();
         Project ??= await context.Projects.FirstOrDefaultAsync(m => m.Id == Id);

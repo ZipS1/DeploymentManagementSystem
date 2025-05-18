@@ -1,5 +1,6 @@
 ﻿@page "/MyTasks"
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.QuickGrid
@@ -52,7 +53,7 @@ else
                     }
                 }
             </InputSelect>
-            @if (task.TaskStatus!.Name == "In progress")
+            @if (task.TaskStatus!.Name == TaskStatusConstants.InProgress)
             {
                 <a class="btn-sm btn-primary" href=@($"worklogs/create?userid={currentUser!.Id}&taskid={task.Id}")>Добавить</a>
             }
@@ -103,7 +104,7 @@ else
                     }
                 }
             </InputSelect>
-            @if (task.TaskStatus!.Name == "In progress")
+            @if (task.TaskStatus!.Name == TaskStatusConstants.InProgress)
             {
                 <a class="btn-sm btn-primary" href=@($"worklogs/create?userid={currentUser!.Id}&taskid={task.Id}")>Добавить</a>
             }
@@ -170,7 +171,7 @@ else
         using var context = DbFactory.CreateDbContext();
         allowedStatusIds.AddRange(context.TaskStatusTransitions
             .Where(t => task.TaskStatusId == t.FromTaskStatusId)
-            .Where(t => t.AllowedRoles.Contains("Assignee") && user.Id == task.AssignedUserId)
+            .Where(t => t.AllowedRoles.Contains(RoleConstants.Assignee) && user.Id == task.AssignedUserId)
             .Select(t => t.ToTaskStatusId));
 
         allowedStatusIds.AddRange(context.TaskStatusTransitions
@@ -183,9 +184,9 @@ else
 
     private void OnTaskChange(Data.Models.Task task)
     {
-        if (task.TaskStatus!.Name == "New" && task.AssignedUserId is not null)
+        if (task.TaskStatus!.Name == TaskStatusConstants.New && task.AssignedUserId is not null)
         {
-            task.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "Assigned")!.Id;
+            task.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == TaskStatusConstants.Assigned)!.Id;
         }
 
         using var context = DbFactory.CreateDbContext();

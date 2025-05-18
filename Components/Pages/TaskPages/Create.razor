@@ -1,5 +1,6 @@
 ﻿@page "/tasks/create"
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
@@ -155,7 +156,7 @@ else
         }
         else
         {
-            Task.TaskStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == "Assigned"))!.Id;
+            Task.TaskStatusId = (await context.TaskStatuses.FirstOrDefaultAsync(s => s.Name == TaskStatusConstants.Assigned))!.Id;
         }
 
         if (!isDueDateEnabled)

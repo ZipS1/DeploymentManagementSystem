@@ -1,4 +1,5 @@
 ﻿@page "/tasks"
+@using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
@@ -168,7 +169,7 @@ else
         using var context = DbFactory.CreateDbContext();
         allowedStatusIds.AddRange(context.TaskStatusTransitions
             .Where(t => task.TaskStatusId == t.FromTaskStatusId)
-            .Where(t => t.AllowedRoles.Contains("Assignee") && user.Id == task.AssignedUserId)
+            .Where(t => t.AllowedRoles.Contains(RoleConstants.Assignee) && user.Id == task.AssignedUserId)
             .Select(t => t.ToTaskStatusId));
 
         allowedStatusIds.AddRange(context.TaskStatusTransitions
@@ -193,9 +194,9 @@ else
 
     private void OnTaskChange(Data.Models.Task task)
     {
-        if (task.TaskStatus!.Name == "New" && task.AssignedUserId is not null)
+        if (task.TaskStatus!.Name == TaskStatusConstants.New && task.AssignedUserId is not null)
         {
-            task.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "Assigned")!.Id;
+            task.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == TaskStatusConstants.Assigned)!.Id;
         }
 
         using var context = DbFactory.CreateDbContext();
@@ -212,9 +213,9 @@ else
         var existingTask = context.Tasks.Include(s => s.TaskStatus).First(t => t.Id == task.Id)!;
 
         existingTask.AssignedUserId = currentUser!.Id;
-        if (existingTask.TaskStatus!.Name == "New" && existingTask.AssignedUserId is not null)
+        if (existingTask.TaskStatus!.Name == TaskStatusConstants.New && existingTask.AssignedUserId is not null)
         {
-            existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "Assigned")!.Id;
+            existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == TaskStatusConstants.Assigned)!.Id;
         }
         context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);
@@ -226,9 +227,9 @@ else
         var existingTask = context.Tasks.Include(t => t.TaskStatus).First(t => t.Id == task.Id)!;
 
         existingTask.AssignedUserId = null;
-        if (existingTask.TaskStatus!.Name == "Assigned")
+        if (existingTask.TaskStatus!.Name == TaskStatusConstants.Assigned)
         {
-            existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == "New")!.Id;
+            existingTask.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == TaskStatusConstants.New)!.Id;
         }
         context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);

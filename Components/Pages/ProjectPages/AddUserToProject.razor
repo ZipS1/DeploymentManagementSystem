@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
@@ -72,7 +73,7 @@ else
     {
         using var context = DbFactory.CreateDbContext();
         Users = UserManager.Users
-                                .Where(u => u.Role != "Admin" && u.Role != "NewUser")
+                                .Where(u => u.Role != RoleConstants.Admin && u.Role != RoleConstants.NewUser)
                                 .OrderByDescending(u => u.Role)
                                 .ThenBy(u => u.Lastname)
                                 .ThenBy(u => u.Name)
