@@ -32,7 +32,14 @@ namespace DeploymentManagementSystem.Data
         private static async Task EnsureRolesCreated(AsyncServiceScope scope)
         {
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var roles = new[] { RoleConstants.Admin, RoleConstants.NewUser, RoleConstants.ProjectManager, RoleConstants.Developer, RoleConstants.LeadDeveloper };
+            var roles = new[] { 
+                RoleConstants.Admin, 
+                RoleConstants.NewUser, 
+                RoleConstants.ProjectManager, 
+                RoleConstants.Developer, 
+                RoleConstants.LeadDeveloper,
+                RoleConstants.Gitlab
+            };
 
             foreach (var role in roles)
             {
@@ -81,6 +88,7 @@ namespace DeploymentManagementSystem.Data
                 new Models.TaskStatus { Name = TaskStatusConstants.OnReview },
                 new Models.TaskStatus { Name = TaskStatusConstants.NeedsRevision },
                 new Models.TaskStatus { Name = TaskStatusConstants.ReadyToDeploy },
+                new Models.TaskStatus { Name = TaskStatusConstants.Deploying },
                 new Models.TaskStatus { Name = TaskStatusConstants.DeploymentError },
                 new Models.TaskStatus { Name = TaskStatusConstants.SuccessfullyDeployed },
                 new Models.TaskStatus { Name = TaskStatusConstants.Finished },
@@ -101,6 +109,8 @@ namespace DeploymentManagementSystem.Data
             var types = new List<Models.TaskType>
             {
                 new Models.TaskType { Name = TaskTypeConstants.Analysis, InitialTaskStatusId = newTaskStatusId },
+                new Models.TaskType { Name = TaskTypeConstants.Bug, InitialTaskStatusId = newTaskStatusId },
+                new Models.TaskType { Name = TaskTypeConstants.Feature, InitialTaskStatusId = newTaskStatusId },
             };
 
             await context.TaskTypes.AddRangeAsync(types);
@@ -115,6 +125,13 @@ namespace DeploymentManagementSystem.Data
             if (await context.TaskStatusTransitions.AnyAsync())
                 return;
 
+            await EnsureAnalysisTransitionsCreated(context, statuses);
+            await EnsureFeatureTransitionsCreated(context, statuses);
+            await EnsureBugTransitionsCreated(context, statuses);
+        }
+
+        private static async Task EnsureAnalysisTransitionsCreated(ApplicationDbContext context, List<Models.TaskStatus> statuses)
+        {
             int analysisTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == TaskTypeConstants.Analysis))!.Id;
             var transitions = new List<Models.TaskStatusTransition>
             {
@@ -144,6 +161,160 @@ namespace DeploymentManagementSystem.Data
                 },
                 new Models.TaskStatusTransition {
                     TaskTypeId = analysisTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    AllowedRoles = RoleConstants.Assignee,
+                },
+            };
+
+            await context.TaskStatusTransitions.AddRangeAsync(transitions);
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task EnsureFeatureTransitionsCreated(ApplicationDbContext context, List<Models.TaskStatus> statuses)
+        {
+            int featureTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == TaskTypeConstants.Feature))!.Id;
+            var transitions = new List<Models.TaskStatusTransition>
+            {
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Assigned)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    AllowedRoles = RoleConstants.Assignee
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    AllowedRoles = RoleConstants.Assignee
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.ReadyToDeploy)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.ReadyToDeploy)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Deploying)!.Id,
+                    AllowedRoles = RoleConstants.Gitlab
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Deploying)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.SuccessfullyDeployed)!.Id,
+                    AllowedRoles = RoleConstants.Gitlab
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Deploying)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.DeploymentError)!.Id,
+                    AllowedRoles = RoleConstants.Gitlab
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.SuccessfullyDeployed)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Finished)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.DeploymentError)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.DeploymentError)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.ReadyToDeploy)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = featureTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    AllowedRoles = RoleConstants.Assignee,
+                },
+            };
+
+            await context.TaskStatusTransitions.AddRangeAsync(transitions);
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task EnsureBugTransitionsCreated(ApplicationDbContext context, List<Models.TaskStatus> statuses)
+        {
+            int bugTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == TaskTypeConstants.Bug))!.Id;
+            var transitions = new List<Models.TaskStatusTransition>
+            {
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Assigned)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    AllowedRoles = RoleConstants.Assignee
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    AllowedRoles = RoleConstants.Assignee
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.OnReview)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.ReadyToDeploy)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.ReadyToDeploy)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Deploying)!.Id,
+                    AllowedRoles = RoleConstants.Gitlab
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Deploying)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.SuccessfullyDeployed)!.Id,
+                    AllowedRoles = RoleConstants.Gitlab
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Deploying)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.DeploymentError)!.Id,
+                    AllowedRoles = RoleConstants.Gitlab
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.SuccessfullyDeployed)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.Finished)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.DeploymentError)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
+                    FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.DeploymentError)!.Id,
+                    ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.ReadyToDeploy)!.Id,
+                    AllowedRoles = RoleConstants.Multiple(RoleConstants.ProjectManager, RoleConstants.LeadDeveloper)
+                },
+                new Models.TaskStatusTransition {
+                    TaskTypeId = bugTaskTypeId,
                     FromTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.NeedsRevision)!.Id,
                     ToTaskStatusId = statuses.FirstOrDefault(s => s.Name == TaskStatusConstants.InProgress)!.Id,
                     AllowedRoles = RoleConstants.Assignee,

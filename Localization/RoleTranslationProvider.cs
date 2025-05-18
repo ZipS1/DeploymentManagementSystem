@@ -8,7 +8,8 @@
             { "NewUser", "Новый пользователь" },
             { "ProjectManager", "Менеджер проекта" },
             { "Developer", "Разработчик" },
-            { "Lead", "Тимлид" }
+            { "Lead", "Тимлид" },
+            { "Service", "Гитлаб" }
         };
 
         public static string GetTranslation(string? roleName)

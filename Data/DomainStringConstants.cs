@@ -8,6 +8,7 @@
         public const string Developer = "Developer";
         public const string LeadDeveloper = "Lead";
         public const string Assignee = "Assignee";
+        public const string Gitlab = "Service";
 
         public static string Multiple(params string[] roles) => string.Join(",", roles);
     }
@@ -20,6 +21,7 @@
         public const string OnReview = "On review";
         public const string NeedsRevision = "Needs revision";
         public const string ReadyToDeploy = "Ready to deploy";
+        public const string Deploying = "Deploying";
         public const string DeploymentError = "Deployment error";
         public const string SuccessfullyDeployed = "Successfully deployed";
         public const string Finished = "Finished";

@@ -9,9 +9,9 @@
             { "In progress", "В работе" },
             { "On review", "На проверке" },
             { "Needs revision", "Требует доработки" },
-            { "Ready to deploy", "Готова к деплою" },
-            { "Deployment error", "Ошибка деплоя" },
-            { "Successfully deployed", "Успешно задеплоена" },
+            { "Ready to deploy", "Готова к развертыванию" },
+            { "Deployment error", "Ошибка развертывания" },
+            { "Successfully deployed", "Успешно развернута" },
             { "Finished", "Завершена" }
         };
 

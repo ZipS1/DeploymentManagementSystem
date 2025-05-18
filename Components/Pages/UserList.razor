@@ -1,6 +1,7 @@
 ﻿@page "/Users"
 @using DeploymentManagementSystem.Components.Account
 @using DeploymentManagementSystem.Data
+@using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
@@ -82,7 +83,7 @@ else
                                 .ThenBy(u => u.Name)
                                 .ThenBy(u => u.Patronymic)
                                 .ToList();
-        Roles = RoleManager.Roles.ToList();
+        Roles = RoleManager.Roles.Where(r => r.Name != RoleConstants.Gitlab).ToList();
 
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
