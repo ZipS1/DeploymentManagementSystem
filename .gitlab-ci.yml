@@ -1,0 +1,40 @@
+stages:
+  - build
+  - deploy
+
+services:
+  - name: docker:28.1.1-dind
+    alias: docker
+
+build:
+  stage: build
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" ./
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  tags:
+    - docker
+
+deploy:
+  stage: deploy
+  when: manual
+  environment:
+    name: production
+    url: https://projectops.ru
+  variables:
+    DOCKER_HOST: ssh://$SSH_USERNAME@$SSH_HOST
+  before_script:
+    - apk add openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY_B64" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan "$SSH_HOST" >> ~/.ssh/known_hosts
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - docker compose -f deploy.docker-compose.yml up -d
+  tags:
+    - docker

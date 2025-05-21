@@ -15,6 +15,9 @@ namespace DeploymentManagementSystem.Data.Models
         [StringLength(500, MinimumLength = 6, ErrorMessage = "Описание, если указано, должно быть от 6 до 500 символов")]
         public string? Description { get; set; }
 
+        [StringLength(100, MinimumLength = 3, ErrorMessage = "")]
+        public string? RefName { get; set; }
+
         [Required]
         public DateTime CreationDate { get; set; }
         public DateTime? DueDate { get; set; }
