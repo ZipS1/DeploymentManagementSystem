@@ -3,15 +3,20 @@
 @using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
 @using DeploymentManagementSystem.Localization
+@using DeploymentManagementSystem.Services
+@using DeploymentManagementSystem.Services.DTOs
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 @attribute [Authorize(Roles = "Admin,ProjectManager,Lead")]
+@inject ILogger<Create> _logger
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
+
+@inject GitlabService GitlabService
 @rendermode InteractiveServer
 
 <PageTitle>Создать</PageTitle>
@@ -113,7 +118,7 @@ else
 
 @code {
     private bool isLoadingCompleted = false;
-    private string? currentUserId;
+    private ApplicationUser? currentUser;
     private List<ApplicationUser> Participants = new();
     private List<Data.Models.TaskType> TaskTypes = new();
     private bool isDueDateEnabled = false;
@@ -129,9 +134,11 @@ else
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+
+        if (user.Identity?.IsAuthenticated ?? false)
         {
-            currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = UserManager.GetUserId(user);
+            currentUser = await UserManager.FindByIdAsync(userId!);
         }
 
         using var context = DbFactory.CreateDbContext();
@@ -147,7 +154,7 @@ else
 
         Task.ProjectId = ProjectId;
         Task.CreationDate = DateTime.Now;
-        Task.CreatorUserId = currentUserId!;
+        Task.CreatorUserId = currentUser!.Id;
 
         Task.RefName = $"<type>/<name>-<id>";
         isLoadingCompleted = true;
@@ -179,7 +186,26 @@ else
         Task.RefName = Task.RefName!.Replace("<id>", Task.Id.ToString());
         await context.SaveChangesAsync();
 
-        NavigationManager.NavigateTo($"/tasks?projectid={ProjectId}");
+        var project = await context.Projects.SingleOrDefaultAsync(p => p.Id == Task.ProjectId)!;
+        var projectDTO = new GitlabProjectDTO 
+        { 
+            Url = project!.GitlabUrl,
+            ProjectId = project!.GitlabProjectId!.Value,
+            DefaultBranch = project.GitlabDefaultBranch 
+        };
+
+        try
+        {
+            await GitlabService.CreateBranchAndMRForTask(projectDTO, Task.RefName, currentUser!.PersonalAccessToken!);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create task branch and MR for Task.Id={Task.Id}", Task.Id);            
+        }
+        finally
+        {
+            NavigationManager.NavigateTo($"/tasks?projectid={ProjectId}");
+        }
     }
 
     private void SetNullIfWhitespace(string propertyName)

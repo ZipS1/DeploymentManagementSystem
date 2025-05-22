@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using DeploymentManagementSystem.Data;
+using DeploymentManagementSystem.Services.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace DeploymentManagementSystem.Services
 {
@@ -27,7 +28,9 @@ namespace DeploymentManagementSystem.Services
                     return false;
                 }
 
-                project.GitlabProjectId = await FetchProjectId(project.GitlabUrl!, userPAT);
+                var dto = await FetchProjectInfo(project.GitlabUrl!, userPAT);
+                project.GitlabProjectId = dto.ProjectId;
+                project.GitlabDefaultBranch = dto.DefaultBranch;
 
                 project.IsGitlabConnected = true;
                 context.Update(project);
@@ -41,7 +44,7 @@ namespace DeploymentManagementSystem.Services
             }
         }
 
-        private async Task<int> FetchProjectId(string url, string userPAT)
+        private async Task<GitlabProjectDTO> FetchProjectInfo(string url, string userPAT)
         {
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
                 throw new ArgumentException("Invalid URL", nameof(url));
@@ -66,7 +69,42 @@ namespace DeploymentManagementSystem.Services
             if (!doc.RootElement.TryGetProperty("id", out var idElement))
                 throw new InvalidOperationException("GitLab API response does not contain 'id' property");
 
-            return idElement.GetInt32();
+            if (!doc.RootElement.TryGetProperty("default_branch", out var defaultBranch))
+                throw new InvalidOperationException("GitLab API response does not contain 'id' property");
+
+            return new GitlabProjectDTO() { ProjectId = idElement.GetInt32(), DefaultBranch = defaultBranch.GetString() };
         }
+
+        public async Task<bool> CreateBranchAndMRForTask(GitlabProjectDTO projectDTO, string taskRefName, string userPAT)
+        {
+            if (!Uri.TryCreate(projectDTO.Url, UriKind.Absolute, out var uri))
+                throw new ArgumentException("Invalid URL", nameof(projectDTO.Url));
+
+            var gitlabApiBase = $"{uri.Scheme}://{uri.Host}/api/v4";
+            var projectId = projectDTO.ProjectId;
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("PRIVATE-TOKEN", userPAT);
+
+            // 1. Create the branch
+            var branchUrl = $"{gitlabApiBase}/projects/{projectId}/repository/branches?branch={Uri.EscapeDataString(taskRefName)}&ref={Uri.EscapeDataString(projectDTO.DefaultBranch)}";
+            var branchResponse = await client.PostAsync(branchUrl, null);
+            branchResponse.EnsureSuccessStatusCode();
+
+            // 2. Create the merge request
+            var mrUrl = $"{gitlabApiBase}/projects/{projectId}/merge_requests";
+            var mrPayload = new
+            {
+                source_branch = taskRefName,
+                target_branch = projectDTO.DefaultBranch,
+                title = $"Automated MR for {taskRefName}"
+            };
+            var mrContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(mrPayload), Encoding.UTF8, "application/json");
+            var mrResponse = await client.PostAsync(mrUrl, mrContent);
+            mrResponse.EnsureSuccessStatusCode();
+
+            return true;
+        }
+
     }
 }
