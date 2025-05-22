@@ -53,6 +53,11 @@
                 <label for="patronymic" class="form-label">Отчество</label>
                 <ValidationMessage For="() => Input.Patronymic" class="text-danger" />
             </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.PersonalAccessToken" class="form-control" placeholder="Введите ваш PAT из Gitlab." type="password" />
+                <label for="pat" class="form-label">Токен доступа</label>
+                <ValidationMessage For="() => Input.PersonalAccessToken" class="text-danger" />
+            </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Сохранить</button>
         </EditForm>
     </div>
@@ -65,6 +70,7 @@
     private string? lastname;
     private string? name;
     private string? patronymic;
+    private string? pat;
 
     private bool isDataChanged = false;
 
@@ -84,11 +90,13 @@
         lastname = user.Lastname;
         name = user.Name;
         patronymic = user.Patronymic;
+        pat = user.PersonalAccessToken;
 
         Input.PhoneNumber ??= PhoneNumberPlaceholder;
         Input.Lastname ??= lastname;
         Input.Name ??= name;
         Input.Patronymic ??= patronymic;
+        Input.PersonalAccessToken ??= pat;
     }
 
     private async Task OnValidSubmitAsync()
@@ -120,6 +128,12 @@
             isDataChanged = true;
         }
 
+        if (Input.PersonalAccessToken != pat)
+        {
+            user.PersonalAccessToken = Input.PersonalAccessToken;
+            isDataChanged = true;
+        }
+
         if (isDataChanged)
         {
             if (IsAccountFullfilled())
@@ -130,7 +144,7 @@
             var setNameResult = await UserManager.UpdateAsync(user);
             if (!setNameResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Ошибка: не удалось установить новое имя.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Ошибка: не удалось установить новые данные.", HttpContext);
             }
         }
 
@@ -138,7 +152,7 @@
         RedirectManager.RedirectToCurrentPageWithStatus("Ваш профиль был обновлён", HttpContext);
     }
 
-    private bool IsAccountFullfilled() => user.Lastname is not null && user.Name is not null && user.Patronymic is not null;
+    private bool IsAccountFullfilled() => user.Lastname is not null && user.Name is not null && user.Patronymic is not null && user.PersonalAccessToken is not null;
 
     private sealed class InputModel
     {
@@ -155,5 +169,8 @@
 
         [StringLength(99, ErrorMessage = "Длина должна быть меньше 100 символов")]
         public string? Patronymic { get; set; }
+
+        [StringLength(99, ErrorMessage = "Длина должна быть меньше 100 символов")]
+        public string? PersonalAccessToken { get; set; }
     }
 }

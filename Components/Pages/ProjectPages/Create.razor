@@ -1,7 +1,9 @@
 ﻿@page "/projects/create"
 
+@using DeploymentManagementSystem.Components.Account
 @using DeploymentManagementSystem.Data
 @using DeploymentManagementSystem.Data.DomainStringConstants
+@using DeploymentManagementSystem.Services
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -9,8 +11,11 @@
 
 @attribute [Authorize(Roles = "Admin,ProjectManager")]
 @inject IDbContextFactory<DeploymentManagementSystem.Data.ApplicationDbContext> DbFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
+
+@inject GitlabService GitlabService
 @rendermode InteractiveServer
 
 <PageTitle>Создать</PageTitle>
@@ -52,7 +57,7 @@
                 </div>
             }
             <div class="mb-3">
-                <label for="gitlaburl" class="form-label">URL Gitlab:</label>
+                <label for="gitlaburl" class="form-label">URL GitLab:</label>
                 <InputText id="gitlaburl" @bind-Value="Project.GitlabUrl" @bind-Value:after="() => SetNullIfWhitespace(nameof(Project.GitlabUrl))" class="form-control" />
                 <ValidationMessage For="() => Project.GitlabUrl" class="text-danger" />
             </div>
@@ -79,6 +84,8 @@
 </div>
 
 @code {
+    ApplicationUser? currentUser;
+
     [SupplyParameterFromForm]
     private Project Project { get; set; } = new();
 
@@ -88,6 +95,15 @@
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
         ProjectManagers = UserManager.Users.Where(u => u.Role == RoleConstants.ProjectManager).ToList();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated ?? false)
+        {
+            var userId = UserManager.GetUserId(user);
+            currentUser = await UserManager.FindByIdAsync(userId!);
+        }
 
         Project.StartDate = DateTime.Now;
         Project.EndDate = null;
@@ -112,6 +128,10 @@
         context.Projects.Add(Project);
         await context.SaveChangesAsync();
 
+        if (!string.IsNullOrEmpty(Project.GitlabUrl))
+        {
+            await GitlabService.InitializeGitlabConnection(Project.Id, currentUser!.PersonalAccessToken!);
+        }
         NavigationManager.NavigateTo("/projects");
     }
 

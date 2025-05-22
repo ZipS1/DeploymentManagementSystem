@@ -2,6 +2,7 @@
 using DeploymentManagementSystem.Components;
 using DeploymentManagementSystem.Components.Account;
 using DeploymentManagementSystem.Data;
+using DeploymentManagementSystem.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => {
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddScoped<GitlabService>();
 
 var app = builder.Build();
 

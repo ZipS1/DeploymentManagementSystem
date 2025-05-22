@@ -10,6 +10,7 @@ namespace DeploymentManagementSystem.Data
         public string? Lastname { get; set; }
         public string? Name { get; set; }
         public string? Patronymic { get; set; }
+        public string? PersonalAccessToken { get; set; }
         public bool IsDataFullfilled { get; set; } = false;
         public string Role { get; set; } = RoleConstants.NewUser;
 

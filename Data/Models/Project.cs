@@ -22,6 +22,10 @@ namespace DeploymentManagementSystem.Data.Models
 
         [Url(ErrorMessage = "Неправильный формат URL")]
         public string? GitlabUrl { get; set; }
+        public int? GitlabProjectId { get; set; }
+        public string? GitlabToken { get; set; }
+        public bool IsGitlabConnected { get; set; } = false;
+
 
         [Required(ErrorMessage = "Руководитель проекта должен быть указан")]
         public string ProjectManagerId { get; set; }

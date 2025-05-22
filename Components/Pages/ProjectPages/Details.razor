@@ -31,7 +31,16 @@
         }
         @if (project.GitlabUrl is not null)
         {
-            <a target="_blank" rel="noopener noreferrer" href="@project.GitlabUrl">GitLab</a>
+            <a target="_blank" rel="noopener noreferrer" href="@project.GitlabUrl">
+                <img src="icons/gitlab.svg" alt="GitLab" style="width: 32px; height: 32px; vertical-align: middle;" />
+            </a>
+            if (project.IsGitlabConnected)
+            {
+                <img src="icons/green-check.svg" alt="Подключено" title="Подключено" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 8px;" />
+            } else
+            {
+                <img src="icons/red-x.svg" alt="Нет подключения" title="Нет подключения" style="width: 24px; height: 24px; vertical-align: middle; margin-left: 8px;" />
+            }
         }
         <hr />
         <dl class="row">
