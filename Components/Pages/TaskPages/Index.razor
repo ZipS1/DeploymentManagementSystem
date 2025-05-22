@@ -40,7 +40,15 @@ else
                                                 .Include(c => c.CreatorUser)
                                                 .Where(t => t.ProjectId == ProjectId)
                                                 .OrderBy(t => t.CreationDate)">
-        <PropertyColumn Property="task => task.Name" Title="Название" />
+        <TemplateColumn Context="task">
+            <HeaderTemplate>
+                <div><strong>Название</strong></div>
+            </HeaderTemplate>
+            <ChildContent>
+                <div>@(task.Name)<br/></div>
+                <div class="table-small-header">@(task.RefName)</div>
+            </ChildContent>
+        </TemplateColumn>
         <TemplateColumn Context="task">
             <HeaderTemplate>
                 <div class="table-small-header">Описание</div>

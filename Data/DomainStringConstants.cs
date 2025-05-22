@@ -30,7 +30,7 @@
     public static class TaskTypeConstants
     {
         public const string Analysis = "Analysis";
-        public const string Bug = "Bug";
+        public const string Fix = "Fix";
         public const string Feature = "Feature";
     }
 }

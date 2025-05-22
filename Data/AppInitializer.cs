@@ -108,9 +108,9 @@ namespace DeploymentManagementSystem.Data
 
             var types = new List<Models.TaskType>
             {
-                new Models.TaskType { Name = TaskTypeConstants.Analysis, InitialTaskStatusId = newTaskStatusId },
-                new Models.TaskType { Name = TaskTypeConstants.Bug, InitialTaskStatusId = newTaskStatusId },
-                new Models.TaskType { Name = TaskTypeConstants.Feature, InitialTaskStatusId = newTaskStatusId },
+                new Models.TaskType { Name = TaskTypeConstants.Analysis, Slug = "analysis", InitialTaskStatusId = newTaskStatusId },
+                new Models.TaskType { Name = TaskTypeConstants.Fix, Slug = "fix", InitialTaskStatusId = newTaskStatusId },
+                new Models.TaskType { Name = TaskTypeConstants.Feature, Slug = "feat", InitialTaskStatusId = newTaskStatusId },
             };
 
             await context.TaskTypes.AddRangeAsync(types);
@@ -250,7 +250,7 @@ namespace DeploymentManagementSystem.Data
 
         private static async Task EnsureBugTransitionsCreated(ApplicationDbContext context, List<Models.TaskStatus> statuses)
         {
-            int bugTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == TaskTypeConstants.Bug))!.Id;
+            int bugTaskTypeId = (await context.TaskTypes.FirstOrDefaultAsync(t => t.Name == TaskTypeConstants.Fix))!.Id;
             var transitions = new List<Models.TaskStatusTransition>
             {
                 new Models.TaskStatusTransition {

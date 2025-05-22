@@ -2,6 +2,7 @@
 @using DeploymentManagementSystem.Data
 @using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
+@using DeploymentManagementSystem.Localization
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -33,7 +34,7 @@ else
                 <ValidationSummary class="text-danger" role="alert" />
                 <div class="mb-3">
                     <label for="name" class="form-label">Название*:</label>
-                    <InputText id="name" @bind-Value="Task.Name" class="form-control" />
+                    <InputText id="name" @bind-Value="Task.Name" class="form-control" @bind-Value:after="() => OnNameChange()" />
                     <ValidationMessage For="() => Task.Name" class="text-danger" />
                 </div>
                 <div class="mb-3">
@@ -64,7 +65,7 @@ else
                 </div>
                 <div class="mb-3">
                     <label for="tasktypeid" class="form-label">Тип задачи*:</label>
-                    <InputSelect id="tasktypeid" @bind-Value="Task.TaskTypeId" class="form-control">
+                    <InputSelect id="tasktypeid" @bind-Value="Task.TaskTypeId" @bind-Value:after="() => OnTaskTypeChange()" class=" form-control">
                         <option value="">Выберите тип задачи</option>
                         @foreach (var taskType in TaskTypes)
                         {
@@ -72,6 +73,11 @@ else
                         }
                     </InputSelect>
                     <ValidationMessage For="() => Task.TaskTypeId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="ref_name" class="form-label">Имя ветки*:</label>
+                    <InputText id="ref_name" @bind-Value="Task.RefName" class="form-control" disabled />
+                    <ValidationMessage For="() => Task.RefName" class="text-danger" />
                 </div>
                 <div class="mb-3">
                     <InputNumber id="projectid" @bind-Value="Task.ProjectId" class="form-control" hidden />
@@ -111,6 +117,7 @@ else
     private List<ApplicationUser> Participants = new();
     private List<Data.Models.TaskType> TaskTypes = new();
     private bool isDueDateEnabled = false;
+    private const int SLUG_LENGTH_MAX = 20;
 
     [SupplyParameterFromForm]
     private Data.Models.Task Task { get; set; } = new();
@@ -142,6 +149,7 @@ else
         Task.CreationDate = DateTime.Now;
         Task.CreatorUserId = currentUserId!;
 
+        Task.RefName = $"<type>/<name>-<id>";
         isLoadingCompleted = true;
     }
 
@@ -164,8 +172,13 @@ else
             Task.DueDate = null;
         }
 
+        UpdateRefName();
         context.Tasks.Add(Task);
         await context.SaveChangesAsync();
+
+        Task.RefName = Task.RefName!.Replace("<id>", Task.Id.ToString());
+        await context.SaveChangesAsync();
+
         NavigationManager.NavigateTo($"/tasks?projectid={ProjectId}");
     }
 
@@ -189,5 +202,49 @@ else
         {
             Task.DueDate = DateTime.Now.AddDays(7);
         }
+    }
+
+    private void UpdateRefName()
+    {
+        var type = TaskTypes.FirstOrDefault(t => t.Id == Task.TaskTypeId);
+        string nameSlug = ToSlug(Task.Name, SLUG_LENGTH_MAX);
+
+        if (type is null)
+        {
+            Task.RefName = $"<type>/{nameSlug}-<id>";
+        }
+        else
+        {
+            Task.RefName = $"{type.Slug}/{nameSlug}-<id>";
+        }
+    }
+
+    private void OnTaskTypeChange()
+    {
+        UpdateRefName();
+    }
+
+    private void OnNameChange()
+    {
+        UpdateRefName();
+    }
+
+    private string ToSlug(string input, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return "<name>";
+
+        string slug = CyrillicToLatinProvider.ToLatin(input);
+
+        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9]+", "-");
+        slug = slug.Trim('-');
+        if (slug.Length > maxLength)
+            slug = slug.Substring(0, maxLength);
+
+        slug = slug.TrimEnd('-');
+        if (string.IsNullOrEmpty(slug))
+            return "<name>";
+
+        return slug;
     }
 }
