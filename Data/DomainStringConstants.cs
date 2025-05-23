@@ -33,4 +33,12 @@
         public const string Fix = "Fix";
         public const string Feature = "Feature";
     }
+
+    public static class PipelineStatusConstants
+    {
+        public const string Running = "running";
+        public const string Success = "success";
+        public const string Failed = "failed";
+        public const string Pending = "pending";
+    }
 }

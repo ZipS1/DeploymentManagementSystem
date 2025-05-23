@@ -2,7 +2,7 @@
 {
     public class GitlabTaskDTO
     {
-        public int BranchNameEncoded { get; set; }
+        public string? BranchNameEncoded { get; set; }
         public int MergeRequestID { get; set; }
     }
 }

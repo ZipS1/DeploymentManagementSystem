@@ -220,19 +220,40 @@ else
         {
             try
             {
-                await GitlabService.MergeMRForTask(
+                var projectDTO = new GitlabProjectDTO
+                    {
+                        Url = existingTask.Project!.GitlabUrl,
+                        ProjectId = existingTask.Project!.GitlabProjectId!.Value,
+                        DefaultBranch = existingTask.Project!.GitlabDefaultBranch,
+                    };
+                var mergeSucceed = await GitlabService.MergeMRForTask(
                     new GitlabTaskDTO
                         {
-                            MergeRequestID = existingTask.MergeRequestId
+                            MergeRequestID = existingTask.MergeRequestId,
+                            BranchNameEncoded = existingTask.RefName,
                         },
-                    new GitlabProjectDTO
-                        {
-                            Url = existingTask.Project!.GitlabUrl,
-                            ProjectId = existingTask.Project!.GitlabProjectId!.Value
-                        },
+                        projectDTO,
                     currentUser!.PersonalAccessToken!
                 );
                 task.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(t => t.Name == TaskStatusConstants.Deploying))!.Id;
+                if (mergeSucceed)
+                {
+                    _ = System.Threading.Tasks.Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await GitlabService.UpdateDeploymentStatus(projectDTO, existingTask.Id, currentUser!.PersonalAccessToken!);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to track deployment status for Task.Id={TaskId}", existingTask.Id);
+                        }
+                    });
+                }
+                else
+                {
+                    task.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(t => t.Name == TaskStatusConstants.DeploymentError))!.Id;
+                }
             }
             catch (Exception ex)
             {
