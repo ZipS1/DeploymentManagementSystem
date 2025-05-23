@@ -1,15 +1,17 @@
-﻿namespace DeploymentManagementSystem.Localization
+﻿using DeploymentManagementSystem.Data.DomainStringConstants;
+
+namespace DeploymentManagementSystem.Localization
 {
     public static class RoleTranslationProvider
     {
         private static readonly Dictionary<string, string> _roleTranslations = new()
         {
-            { "Admin", "Администратор" },
-            { "NewUser", "Новый пользователь" },
-            { "ProjectManager", "Менеджер проекта" },
-            { "Developer", "Разработчик" },
-            { "Lead", "Тимлид" },
-            { "Service", "Гитлаб" }
+            { RoleConstants.Admin, "Администратор" },
+            { RoleConstants.NewUser, "Новый пользователь" },
+            { RoleConstants.ProjectManager, "Менеджер проекта" },
+            { RoleConstants.Developer, "Разработчик" },
+            { RoleConstants.LeadDeveloper, "Тимлид" },
+            { RoleConstants.Gitlab, "Гитлаб" }
         };
 
         public static string GetTranslation(string? roleName)

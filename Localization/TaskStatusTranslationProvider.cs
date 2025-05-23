@@ -1,18 +1,21 @@
-﻿namespace DeploymentManagementSystem.Localization
+﻿using DeploymentManagementSystem.Data.DomainStringConstants;
+
+namespace DeploymentManagementSystem.Localization
 {
     public static class TaskStatusTranslationProvider
     {
         private static readonly Dictionary<string, string> _statusTranslations = new()
         {
-            { "New", "Новая" },
-            { "Assigned", "Назначена" },
-            { "In progress", "В работе" },
-            { "On review", "На проверке" },
-            { "Needs revision", "Требует доработки" },
-            { "Ready to deploy", "Готова к развертыванию" },
-            { "Deployment error", "Ошибка развертывания" },
-            { "Successfully deployed", "Успешно развернута" },
-            { "Finished", "Завершена" }
+            { TaskStatusConstants.New, "Новая" },
+            { TaskStatusConstants.Assigned, "Назначена" },
+            { TaskStatusConstants.InProgress, "В работе" },
+            { TaskStatusConstants.OnReview, "На проверке" },
+            { TaskStatusConstants.NeedsRevision, "Требует доработки" },
+            { TaskStatusConstants.ReadyToDeploy, "Готова к развертыванию" },
+            { TaskStatusConstants.Deploying, "Развертывается" },
+            { TaskStatusConstants.DeploymentError, "Ошибка развертывания" },
+            { TaskStatusConstants.SuccessfullyDeployed, "Успешно развернута" },
+            { TaskStatusConstants.Finished, "Завершена" }
         };
 
         public static string GetTranslation(string? statusName)
