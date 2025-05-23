@@ -187,6 +187,13 @@ else
         await context.SaveChangesAsync();
 
         var project = await context.Projects.SingleOrDefaultAsync(p => p.Id == Task.ProjectId)!;
+        if ((await context.TaskTypes.SingleOrDefaultAsync(t => t.Id == Task.TaskTypeId))!.Name == TaskTypeConstants.Analysis ||
+            project!.IsGitlabConnected == false)
+        {
+            NavigationManager.NavigateTo($"/tasks?projectid={ProjectId}");
+            return;
+        }
+
         var projectDTO = new GitlabProjectDTO 
         { 
             Url = project!.GitlabUrl,
@@ -196,7 +203,9 @@ else
 
         try
         {
-            await GitlabService.CreateBranchAndMRForTask(projectDTO, Task.RefName, currentUser!.PersonalAccessToken!);
+            var taskDTO = await GitlabService.CreateBranchAndMRForTask(projectDTO, Task.RefName, currentUser!.PersonalAccessToken!);
+            Task.MergeRequestId = taskDTO.MergeRequestID;
+            await context.SaveChangesAsync();
         }
         catch (Exception ex)
         {

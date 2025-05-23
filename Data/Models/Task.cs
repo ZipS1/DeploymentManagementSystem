@@ -17,6 +17,7 @@ namespace DeploymentManagementSystem.Data.Models
 
         [StringLength(100, MinimumLength = 3, ErrorMessage = "")]
         public string? RefName { get; set; }
+        public int MergeRequestId { get; set; }
 
         [Required]
         public DateTime CreationDate { get; set; }

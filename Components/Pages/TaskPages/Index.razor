@@ -1,6 +1,8 @@
 ﻿@page "/tasks"
 @using DeploymentManagementSystem.Data.DomainStringConstants
 @using DeploymentManagementSystem.Extensions
+@using DeploymentManagementSystem.Services
+@using DeploymentManagementSystem.Services.DTOs
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -13,6 +15,8 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
+@inject GitlabService GitlabService
+@inject ILogger<Index> _logger
 @rendermode InteractiveServer
 
 @if (!isLoadingCompleted)
@@ -200,7 +204,7 @@ else
         return context.WorkLogs.Include(w => w.Task).Where(w => w.Task!.ProjectId == ProjectId).Sum(w => w.TimeSpent);
     }
 
-    private void OnTaskChange(Data.Models.Task task)
+    private async System.Threading.Tasks.Task OnTaskChange(Data.Models.Task task)
     {
         if (task.TaskStatus!.Name == TaskStatusConstants.New && task.AssignedUserId is not null)
         {
@@ -208,7 +212,34 @@ else
         }
 
         using var context = DbFactory.CreateDbContext();
-        var existingTask = context.Tasks.Find(task.Id)!;
+        var existingTask = context.Tasks
+            .Include(t => t.Project)
+            .FirstOrDefault(t => t.Id == task.Id)!;
+
+        if (task.TaskStatusId == TaskStatuses.SingleOrDefault(t => t.Name == TaskStatusConstants.ReadyToDeploy)!.Id)
+        {
+            try
+            {
+                await GitlabService.MergeMRForTask(
+                    new GitlabTaskDTO
+                        {
+                            MergeRequestID = existingTask.MergeRequestId
+                        },
+                    new GitlabProjectDTO
+                        {
+                            Url = existingTask.Project!.GitlabUrl,
+                            ProjectId = existingTask.Project!.GitlabProjectId!.Value
+                        },
+                    currentUser!.PersonalAccessToken!
+                );
+                task.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(t => t.Name == TaskStatusConstants.Deploying))!.Id;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to merge an MR for Task.Id={task.Id}", task.Id);
+                task.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(t => t.Name == TaskStatusConstants.DeploymentError))!.Id;
+            }
+        }
 
         context.Entry(existingTask).CurrentValues.SetValues(task);
         context.SaveChanges();

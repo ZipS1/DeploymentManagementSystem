@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Text.Json;
 using DeploymentManagementSystem.Data;
 using DeploymentManagementSystem.Services.DTOs;
@@ -75,7 +76,7 @@ namespace DeploymentManagementSystem.Services
             return new GitlabProjectDTO() { ProjectId = idElement.GetInt32(), DefaultBranch = defaultBranch.GetString() };
         }
 
-        public async Task<bool> CreateBranchAndMRForTask(GitlabProjectDTO projectDTO, string taskRefName, string userPAT)
+        public async Task<GitlabTaskDTO> CreateBranchAndMRForTask(GitlabProjectDTO projectDTO, string taskRefName, string userPAT)
         {
             if (!Uri.TryCreate(projectDTO.Url, UriKind.Absolute, out var uri))
                 throw new ArgumentException("Invalid URL", nameof(projectDTO.Url));
@@ -99,12 +100,45 @@ namespace DeploymentManagementSystem.Services
                 target_branch = projectDTO.DefaultBranch,
                 title = $"Automated MR for {taskRefName}"
             };
-            var mrContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(mrPayload), Encoding.UTF8, "application/json");
+            var mrContent = new StringContent(JsonSerializer.Serialize(mrPayload), Encoding.UTF8, "application/json");
             var mrResponse = await client.PostAsync(mrUrl, mrContent);
             mrResponse.EnsureSuccessStatusCode();
 
-            return true;
+            var json = await mrResponse.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(json);
+            if (!doc.RootElement.TryGetProperty("iid", out var iidElement))
+                throw new InvalidOperationException("GitLab API response does not contain 'id' property");
+
+            return new GitlabTaskDTO { MergeRequestID = iidElement.GetInt32() };
         }
 
+        public async Task<bool> MergeMRForTask(GitlabTaskDTO taskDTO, GitlabProjectDTO projectDTO, string userPAT)
+        {
+            if (!Uri.TryCreate(projectDTO.Url, UriKind.Absolute, out var uri))
+                throw new ArgumentException("Invalid URL", nameof(projectDTO.Url));
+
+            var gitlabApiBase = $"{uri.Scheme}://{uri.Host}/api/v4";
+            var projectId = projectDTO.ProjectId;
+            var mergeRequestId = taskDTO.MergeRequestID;
+
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("PRIVATE-TOKEN", userPAT);
+
+            var mergeUrl = $"{gitlabApiBase}/projects/{projectId}/merge_requests/{mergeRequestId}/merge";
+
+            var mergePayload = new
+            {
+                auto_merge = true,
+            };
+            var mergeContent = new StringContent(JsonSerializer.Serialize(mergePayload), Encoding.UTF8, "application/json");
+
+            var response = await client.PutAsync(mergeUrl, mergeContent);
+
+            if (response.IsSuccessStatusCode)
+                return true;
+
+            return false;
+        }
     }
 }
