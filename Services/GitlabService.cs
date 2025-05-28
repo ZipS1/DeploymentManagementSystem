@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using DeploymentManagementSystem.Data;
 using DeploymentManagementSystem.Data.DomainStringConstants;
 using DeploymentManagementSystem.Services.DTOs;
@@ -200,7 +199,7 @@ namespace DeploymentManagementSystem.Services
             return status == PipelineStatusConstants.Success;
         }
 
-        public async Task<bool> UpdateDeploymentStatus(GitlabProjectDTO projectDTO, int taskId, string userPAT, CancellationToken cancellationToken = default)
+        public async Task<bool> QueryAndHandleDeploymentPipeline(GitlabProjectDTO projectDTO, int taskId, string userPAT, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -216,36 +215,22 @@ namespace DeploymentManagementSystem.Services
 
                 if (dto.Status == PipelineStatusConstants.Success)
                 {
-                    await SetStatusForTask(taskId, TaskStatusConstants.SuccessfullyDeployed, cancellationToken);
-
+                    return true;
                 } else
                 {
                     await HandlePipelineFailure(projectDTO, dto.CommitSHA, taskId, userPAT, cancellationToken);
+                    return false;
                 }
-
-                return true;
             }
             catch (Exception ex)
             {
-                await SetStatusForTask(taskId, TaskStatusConstants.DeploymentError);
                 _logger.LogError(ex, "Failed to track deployment status of Task.Id={taskId}", taskId);
                 return false;
             }
         }
 
-        private async Task SetStatusForTask(int taskId, string status, CancellationToken cancellationToken = default)
-        {
-            _logger.LogInformation($"Run a set status '{status}' job for task.Id {taskId}");
-            using var scope = _scopeFactory.CreateScope();
-            using var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var task = await context.Tasks.SingleOrDefaultAsync(t => t.Id == taskId, cancellationToken);
-            task!.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(s => s.Name == status, cancellationToken))!.Id;
-            await context.SaveChangesAsync(cancellationToken);
-        }
-
         private async Task HandlePipelineFailure(GitlabProjectDTO projectDTO, string mergeCommitSha, int taskId, string userPAT, CancellationToken cancellationToken = default)
         {
-            await SetStatusForTask(taskId, TaskStatusConstants.DeploymentError, cancellationToken);
             await RevertMergeCommit(projectDTO, mergeCommitSha, taskId, userPAT, cancellationToken);
         }
 

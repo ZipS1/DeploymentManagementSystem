@@ -11,6 +11,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
+@inject ILogger<MyTasks> _logger
 @rendermode InteractiveServer
 
 @attribute [Authorize(Roles = "Developer,Lead,ProjectManager")]
@@ -44,9 +45,11 @@ else
         </TemplateColumn>
         <TemplateColumn Context="task" Title="Статус">
             <InputSelect @bind-Value=task.TaskStatusId class="form-control" @bind-Value:after="() => OnTaskChange(task)">
+            @{
+                    var allowedStatusIds = FetchAllowedStatusIds(task, currentUser!);
+                }
                 @foreach (var status in TaskStatuses)
                 {
-                    var allowedStatusIds = FetchAllowedStatusIds(task, currentUser!);
                     @if (allowedStatusIds.Any(t => t == status.Id))
                     {
                         <option value="@status.Id">@status.GetTranslation()</option>
@@ -170,15 +173,14 @@ else
         List<int> allowedStatusIds = new(new int[] { task.TaskStatusId });
         using var context = DbFactory.CreateDbContext();
         allowedStatusIds.AddRange(context.TaskStatusTransitions
+            .Where(t => t.TaskTypeId == task.TaskTypeId)
             .Where(t => task.TaskStatusId == t.FromTaskStatusId)
-            .Where(t => t.AllowedRoles.Contains(RoleConstants.Assignee) && user.Id == task.AssignedUserId)
+            .Where(t => (t.AllowedRoles.Contains(RoleConstants.Assignee) && user.Id == task.AssignedUserId) ||
+                        t.AllowedRoles.Contains(user.Role))
             .Select(t => t.ToTaskStatusId));
 
-        allowedStatusIds.AddRange(context.TaskStatusTransitions
-            .Where(t => task.TaskStatusId == t.FromTaskStatusId)
-            .Where(t => t.AllowedRoles.Contains(user.Role))
-            .Select(t => t.ToTaskStatusId));
-
+        var stringedStatusIds = string.Join(',', allowedStatusIds);
+        _logger.LogInformation($"Allowed status IDs for task.Id{task.Id}: {stringedStatusIds}");
         return allowedStatusIds;
     }
 

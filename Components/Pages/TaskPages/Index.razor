@@ -16,6 +16,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
 @inject GitlabService GitlabService
+@inject IDeploymentQueue DeploymentQueue
 @inject ILogger<Index> _logger
 @rendermode InteractiveServer
 
@@ -75,9 +76,11 @@ else
         </TemplateColumn>
         <TemplateColumn Context="task" Title="Статус">
             <InputSelect @bind-Value=task.TaskStatusId class="form-control" @bind-Value:after="() => OnTaskChange(task)">
+                @{
+                    var allowedStatusIds = FetchAllowedStatusIds(task, currentUser!);
+                }
                 @foreach (var status in TaskStatuses)
                 {
-                    var allowedStatusIds = FetchAllowedStatusIds(task, currentUser!);
                     @if (allowedStatusIds.Any(t => t == status.Id))
                     {
                         <option value="@status.Id">@status.GetTranslation()</option>
@@ -180,15 +183,14 @@ else
         List<int> allowedStatusIds = new( new int[] { task.TaskStatusId });
         using var context = DbFactory.CreateDbContext();
         allowedStatusIds.AddRange(context.TaskStatusTransitions
+            .Where(t => t.TaskTypeId == task.TaskTypeId)
             .Where(t => task.TaskStatusId == t.FromTaskStatusId)
-            .Where(t => t.AllowedRoles.Contains(RoleConstants.Assignee) && user.Id == task.AssignedUserId)
+            .Where(t => (t.AllowedRoles.Contains(RoleConstants.Assignee) && user.Id == task.AssignedUserId) || 
+                        t.AllowedRoles.Contains(user.Role))
             .Select(t => t.ToTaskStatusId));
 
-        allowedStatusIds.AddRange(context.TaskStatusTransitions
-            .Where(t => task.TaskStatusId == t.FromTaskStatusId)
-            .Where(t => t.AllowedRoles.Contains(user.Role))
-            .Select(t => t.ToTaskStatusId));
-
+        var stringedStatusIds = string.Join(',', allowedStatusIds);
+        _logger.LogInformation($"Allowed status IDs for task.Id{task.Id}: {stringedStatusIds}");
         return allowedStatusIds;
     }
 
@@ -211,59 +213,19 @@ else
             task.TaskStatusId = TaskStatuses.FirstOrDefault(t => t.Name == TaskStatusConstants.Assigned)!.Id;
         }
 
-        using var context = DbFactory.CreateDbContext();
-        var existingTask = context.Tasks
-            .Include(t => t.Project)
-            .FirstOrDefault(t => t.Id == task.Id)!;
+        using var context = await DbFactory.CreateDbContextAsync();
+        var existingTask = await context.Tasks
+            .FirstOrDefaultAsync(t => t.Id == task.Id)!;
+        context.Entry(existingTask!).CurrentValues.SetValues(task);
+        await context.SaveChangesAsync();
 
         if (task.TaskStatusId == TaskStatuses.SingleOrDefault(t => t.Name == TaskStatusConstants.ReadyToDeploy)!.Id)
         {
-            try
-            {
-                var projectDTO = new GitlabProjectDTO
-                    {
-                        Url = existingTask.Project!.GitlabUrl,
-                        ProjectId = existingTask.Project!.GitlabProjectId!.Value,
-                        DefaultBranch = existingTask.Project!.GitlabDefaultBranch,
-                    };
-                var mergeSucceed = await GitlabService.MergeMRForTask(
-                    new GitlabTaskDTO
-                        {
-                            MergeRequestID = existingTask.MergeRequestId,
-                            BranchNameEncoded = existingTask.RefName,
-                        },
-                        projectDTO,
-                    currentUser!.PersonalAccessToken!
-                );
-                task.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(t => t.Name == TaskStatusConstants.Deploying))!.Id;
-                if (mergeSucceed)
-                {
-                    _ = System.Threading.Tasks.Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await GitlabService.UpdateDeploymentStatus(projectDTO, existingTask.Id, currentUser!.PersonalAccessToken!);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Failed to track deployment status for Task.Id={TaskId}", existingTask.Id);
-                        }
-                    });
-                }
-                else
-                {
-                    task.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(t => t.Name == TaskStatusConstants.DeploymentError))!.Id;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to merge an MR for Task.Id={task.Id}", task.Id);
-                task.TaskStatusId = (await context.TaskStatuses.SingleOrDefaultAsync(t => t.Name == TaskStatusConstants.DeploymentError))!.Id;
-            }
+            var request = new DeploymentRequest(task.Id, currentUser!.PersonalAccessToken!);
+            await DeploymentQueue.QueueDeploymentAsync(request);
+            _logger.LogInformation($"Queued task.Id={existingTask!.Id} for deployment");
         }
 
-        context.Entry(existingTask).CurrentValues.SetValues(task);
-        context.SaveChanges();
         NavigationManager.Refresh(forceReload: true);
     }
 

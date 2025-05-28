@@ -52,6 +52,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => {
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<GitlabService>();
+builder.Services.AddSingleton<IDeploymentQueue, DeploymentQueue>();
+builder.Services.AddHostedService<DeploymentService>();
 
 var app = builder.Build();
 
