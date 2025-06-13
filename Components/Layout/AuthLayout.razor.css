@@ -3,7 +3,7 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh; /* Ensure it covers the full height of the viewport */
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-image: var(--bs-gradient);
     background-attachment: fixed; /* Ensure it stays fixed during scrolling */
     background-size: cover; /* Ensure the gradient covers the entire area */
 }
@@ -28,7 +28,7 @@ article.content {
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-image: var(--bs-gradient);
 }
 
 .top-row {
