@@ -56,7 +56,7 @@ else
                     }
                 }
             </InputSelect>
-            @if (task.TaskStatus!.Name == TaskStatusConstants.InProgress)
+            @if (task.TaskStatus!.Name == TaskStatusConstants.InProgress && currentUser!.Id == task.AssignedUserId)
             {
                 <a class="btn-sm btn-primary" href=@($"worklogs/create?userid={currentUser!.Id}&taskid={task.Id}")>Добавить</a>
             }
