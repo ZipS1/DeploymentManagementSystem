@@ -8,9 +8,9 @@ namespace DeploymentManagementSystem.Localization
         {
             { RoleConstants.Admin, "Администратор" },
             { RoleConstants.NewUser, "Новый пользователь" },
-            { RoleConstants.ProjectManager, "Менеджер проекта" },
+            { RoleConstants.ProjectManager, "Руководитель проектов" },
             { RoleConstants.Developer, "Разработчик" },
-            { RoleConstants.LeadDeveloper, "Тимлид" },
+            { RoleConstants.LeadDeveloper, "Ведущий разработчик" },
             { RoleConstants.Gitlab, "Гитлаб" }
         };
 
