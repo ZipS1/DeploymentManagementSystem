@@ -21,7 +21,6 @@ build:
 
 deploy:
   stage: deploy
-  when: manual
   environment:
     name: production
     url: https://projectops.ru
