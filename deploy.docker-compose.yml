@@ -6,6 +6,7 @@ services:
     environment:
       - PG_PASSWORD=${PG_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     ports:
       - "80:8080"
     networks:
