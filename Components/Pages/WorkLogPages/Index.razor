@@ -34,7 +34,9 @@ else
         <TemplateColumn Context="worklog" Title="Дата">
             @worklog.Date.ToShortDateString()
         </TemplateColumn>
-        <PropertyColumn Property="worklog => worklog.TimeSpent" Title="Потраченное время" />
+        <TemplateColumn Context="worklog" Title="Потраченное время">
+            @worklog.TimeSpent ч
+        </TemplateColumn>
         <TemplateColumn Context="worklog" Title="Задача">
             @worklog.Task!.Name.GetTaskTypeTranslation()
         </TemplateColumn>
