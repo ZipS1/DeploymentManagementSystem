@@ -6,15 +6,33 @@
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using DeploymentManagementSystem.Data
+@using System.Text.RegularExpressions
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var userAgent = HttpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString() ?? "";
+    var isMobile = Regex.IsMatch(
+        userAgent,
+        "android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile",
+        RegexOptions.IgnoreCase
+    );
+}
 
 <PageTitle>Вход</PageTitle>
 
 <h1 class="text-center">Вход</h1>
+@if (isMobile)
+{
+    <div class="alert alert-warning text-center" role="alert">
+        Система может отображаться некорректно на мобильных устройствах.<br />
+        Рекомендуем использовать десктопное устройство для работы
+    </div>
+}
 <div class="row">
     <section>
         <StatusMessage Message="@errorMessage" />
