@@ -51,7 +51,10 @@ else
             </HeaderTemplate>
             <ChildContent>
                 <div>@(task.Name)<br/></div>
-                <div class="table-small-header">@(task.RefName)</div>
+                @if (task.TaskTypeId != TaskTypes.First(t => t.Name == TaskTypeConstants.Analysis).Id)
+                {
+                    <div class="table-small-header">@(task.RefName)</div>
+                }
             </ChildContent>
         </TemplateColumn>
         <TemplateColumn Context="task">
@@ -157,6 +160,7 @@ else
     private bool isLoadingCompleted = false;
 
     private List<Data.Models.TaskStatus> TaskStatuses { get; set; } = new();
+    private List<Data.Models.TaskType> TaskTypes { get; set; } = new();
 
     [SupplyParameterFromQuery]
     private int ProjectId { get; set; }
@@ -175,6 +179,7 @@ else
         currentUser = await UserManager.FindByIdAsync(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
 
         TaskStatuses = await context.TaskStatuses.ToListAsync();
+        TaskTypes = await context.TaskTypes.ToListAsync();
         isLoadingCompleted = true;
     }
 
