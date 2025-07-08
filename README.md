@@ -1,137 +1,110 @@
-# Описание
-ProjectOps - система управления IT-проектами с упором на автоматизацию CI/CD. В приложении есть следующие ключевые роли пользователей: Администратор (Админ), Руководитель проекта (PM, РП), Ведущий разработчик (Lead, Лид), Разработчик (Developer). Пользователи с ролью Админа и РП могут выставлять роли другим пользователям.
+# ProjectOps - IT Project Management System with CI/CD Automation
 
-Руководитель проекта может создать проект, в который добавляет участников (из числа разработчиков). При создании проекта также указываются название, описание, ссылка на git-репозиторий.
+## Project Description
 
-РП и Лид может добавлять задачи по проекту. Пока реализованы задачи трех типов: Анализ, Улучшение функционала и Исправление ошибок. У каждой задачи есть своя цепочка статусов, переключать каждый из которых может только определенная роль или исполнитель.
+**ProjectOps** is a modern IT project management system that combines classic task management with CI/CD process automation. The key feature of the system is the ability to automatically trigger deployments through task status changes, eliminating the gap between PM and DevOps teams.
 
-Ключевой фишкой данной системы управления проектами является интеграция с CI/CD git-репозитория. Система сканирует окружения, подключенные к репозиторию и определяет тестовое и продакшн окружение. В задачах типа Улучшение функционала и Исправление ошибок, предполагающих работу с исходным кодом, есть статус Готово к развертыванию. При активации задачей этого статуса выполняется автоматическое развертывание на тестовое окружение. В зависимости от статуса завершения пайплайна CI/CD выставляется статус "Успешно развернуто" или "Ошибка развертывания". Для каждого окружения в системе ProjectOps записывается дата последнего успешного развертывания. Для продакшн-окружения считается количество задач по типу, выполненных с момента последнего успешного развертывания. Развертывание на прод выполняется только Лидом или РП по нажатию кнопки.
+The system is designed for development teams that require tight integration between project management and continuous integration and deployment processes. ProjectOps solves the problem of tool fragmentation, where PMs don't control deployments and DevOps spend time manually triggering pipelines.
 
-Для задач, находящихся в статусе "В работе", также можно добавлять трудозатраты.
+## Setup Instructions
 
-### **Итоговый анализ ProjectOps**  
----
+### Prerequisites
 
-#### **1. Решаемая проблема и актуальность**  
-**Проблема**:  
-- **Разрыв между управлением задачами и CI/CD**: PM не контролируют деплои, DevOps тратят время на ручной запуск пайплайнов и синхронизацию статусов.  
-- **Сложность инструментов**: GitLab CI/CD, Jira и другие решения требуют технических навыков для настройки интеграций.  
+- **Docker** and **Docker Compose** installed on the system
+- **Git** for repository cloning
 
-**Актуальность**:  
-- Рост спроса на **low-code автоматизацию** для нетехнических PM.  
-- Тренд на **ускорение time-to-market** через сокращение ручных процессов.  
-- Ниша: команды, где **PM и DevOps должны тесно взаимодействовать**, но текущие инструменты разрознены.  
+### Quick Start with Docker
 
----
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/ZipS1/DeploymentManagementSystem.git
+   cd DeploymentManagementSystem
+   ```
 
-#### **2. Описание продукта и ключевые фишки**  
-**Суть**:  
-ProjectOps — система управления IT-проектами с **автоматизацией CI/CD через статусы задач**.  
+2. **Set up environment variables**:
+   ```bash
+   # Create .env file in the project root
+   echo "PG_PASSWORD=your_secure_password" > .env
+   ```
 
-**Фишки**:  
-1. **Автоматический триггер деплоя**:  
-   - При статусе «Готово к развертыванию» запускается пайплайн GitLab CI.  
-   - Интеграция через API с проверкой актуальности коммитов и веток.  
-2. **Ролевая модель для IT**:  
-   - Лид/РП управляют деплоями на прод, PM видят аналитику.  
-3. **Аналитика деплоев**:  
-   - История успешных/неудачных деплоев, связь с задачами.  
-4. **Автоопределение окружений**:  
-   - Сканирование `.gitlab-ci.yml` для обнаружения тестового и продакшн-окружения.  
+3. **Launch with Docker Compose**:
+   ```bash
+   docker-compose up -d
+   ```
 
----
+4. **Access the application**:
+   - Open your browser and navigate to `http://localhost:80`
+   - Database will be available on port `5432`
 
-#### **3. Конкуренты и УТП**  
-**Конкуренты**:  
-- **GitLab CI/CD/Jira**: Мощные, но разрозненные.  
-- **Linear/ClickUp**: Просты для PM, но не автоматизируют CI/CD.  
-- **Azure DevOps**: Сложен для малых команд.  
+## Technology Stack
 
-**Уникальное торговое предложение (УТП)**:  
-«ProjectOps объединяет управление задачами и CI/CD, давая PM контроль над деплоями через статусы задач, а DevOps — автоматизацию рутинных действий».  
+### Core Technologies
+- **Framework**: ASP.NET Core 8.0
+- **Architecture**: Blazor Server
+- **Programming Language**: C# (.NET 8.0)
+- **Database**: PostgreSQL
+- **ORM**: Entity Framework Core with Npgsql provider
 
-**Отличия**:  
-- **Для PM**: Прозрачность процесса деплоя без погружения в технические детали.  
-- **Для DevOps**: Сокращение ручного труда через интеграцию с GitLab API.  
+### Infrastructure and Deployment
+- **Containerization**: Docker, Docker Compose
+- **CI/CD**: GitLab CI/CD
+- **Web Server**: Kestrel (built into ASP.NET Core)
+- **Authentication**: ASP.NET Core Identity
+- **User Interface**: Blazor Components
+- **Communication**: SignalR (for Blazor Server)
+- **Static Files**: wwwroot (CSS, JavaScript, images)
 
----
+## Project Structure
 
-#### **4. Целевая аудитория и их боли**  
-**Сегменты**:  
-1. **Стартапы (5–15 человек)**:  
-   - **Боль**: Нет ресурсов на отдельного DevOps, PM вынужден управлять релизами.  
-   - **Решение**: Простая настройка деплоя через статусы задач.  
-2. **Аутсорс-компании**:  
-   - **Боль**: Множество проектов с разными репозиториями и процессами.  
-   - **Решение**: Единая панель для управления деплоями всех проектов.  
-3. **Enterprise-команды**:  
-   - **Боль**: Сложность аудита деплоев и связи с задачами.  
-   - **Решение**: Автоматические отчеты и история изменений.  
+```
+DeploymentManagementSystem/
+├── Components/                    # Blazor components
+│   └── Pages/                    # Application pages
+│       ├── ProjectPages/         # Project management pages
+│       ├── TaskPages/            # Task management pages
+│       ├── WorkLogPages/         # Work log pages
+│       ├── Home.razor            # Home page
+│       └── UserList.razor        # User list
+├── Data/                         # Data models and DB context
+│   ├── Models/                   # Domain models
+│   │   ├── Project.cs           # Project model
+│   │   ├── Task.cs              # Task model
+│   │   ├── Environment.cs       # Environment model
+│   │   ├── TaskStatus.cs        # Task status model
+│   │   ├── TaskType.cs          # Task type model
+│   │   └── WorkLog.cs           # Work log model
+│   ├── Configurations/          # Entity Framework configurations
+│   ├── ApplicationDbContext.cs  # Database context
+│   └── ApplicationUser.cs       # User model
+├── Services/                     # Business logic and services
+│   ├── GitlabService.cs         # GitLab integration service
+│   ├── DeploymentService.cs     # Deployment management service
+│   └── DeploymentQueue.cs       # Deployment queue
+├── Extensions/                   # Extensions and helper methods
+├── Localization/                 # Localization files
+├── Properties/                   # Project properties
+├── wwwroot/                      # Static files
+├── Program.cs                    # Application entry point
+├── Dockerfile                    # Docker image configuration
+├── docker-compose.yml            # Development configuration
+├── deploy.docker-compose.yml     # Production configuration
+├── .gitlab-ci.yml               # CI/CD configuration
+├── appsettings.json             # Application settings
+└── DeploymentManagementSystem.csproj # Project file
+```
 
-**Роли**:  
-- **PM/РП**: Контроль сроков и деплоев.  
-- **Лиды**: Управление кодом и релизами.  
-- **Разработчики**: Интеграция задач с их workflow.  
+## Functionality
 
----
+### Core Features
+- **Project Management**: Create, edit, and delete projects with Git repository binding
+- **Task Management**: Support for three task types — Analysis, Feature Enhancement, Bug Fix
+- **Role System**: Four user roles with different access levels
+- **GitLab Integration**: Automatic branch creation, MR creation, and CI/CD pipeline triggering
+- **Automatic Deployment**: Deployment trigger on task status change
+- **Work Time Tracking**: Ability to add work time to tasks
 
-#### **5. Маркетинг и позиционирование**  
-**Позиционирование**:  
-«ProjectOps — это мост между PM и DevOps, превращающий статусы задач в автоматические деплои».  
-
-**Каналы продвижения**:  
-- **Контент-маркетинг**:  
-  - Статьи: «Как автоматизировать CI/CD без навыков DevOps».  
-  - Видео: Демо интеграции с GitLab.  
-- **Партнерства**:  
-  - Размещение в GitLab Marketplace.  
-  - Курсы для PM в IT-академиях.  
-- **Пилотные проекты**:  
-  - Бесплатный доступ для первых 20 команд в обмен на фидбек.  
-
----
-
-#### **6. Перспективы развития**  
-**MVP-стратегия**:  
-- **Фокус**: Интеграция с GitLab, автоматизация деплоя через статусы.  
-- **Этапы**:  
-  1. Запуск MVP с базовой интеграцией (триггер пайплайнов + уведомления).  
-  2. Привлечение 5–10 бета-тестеров из стартапов и аутсорса.  
-  3. Сбор метрик: время на ручные действия до/после внедрения.  
-
-**Риски и решения**:  
-- **Конкуренция**: GitLab/GitHub могут добавить аналогичный функционал → Акцент на нишевые команды и быстрое развитие.  
-- **Сложность миграции**: Инструмент для импорта задач из Jira.  
-
-**Дорожная карта**:  
-1. Реализация GitLab CI/CD интеграции.  
-2. Добавление аналитики деплоев.  
-3. Поддержка Docker для локального развертывания.  
-4. Расширение на GitHub и Bitbucket.  
-
----
-
-#### **7. Бизнес-модель и каналы продаж**  
-**Модель**:  
-- **Freemium**:  
-  - Бесплатно: До 3 проектов, 5 пользователей.  
-  - Платно ($15/пользователь в месяц): Расширенные CI/CD-правила, аналитика, приоритетная поддержка.  
-- **Enterprise**:  
-  - On-premise установка (цена по запросу).  
-  - Кастомные интеграции.  
-
-**Каналы продаж**:  
-- **Self-service**: Через сайт с бесплатным триалом.  
-- **Прямые продажи**: Для корпоративных клиентов.  
-- **Партнеры**: GitLab Marketplace, облачные провайдеры.  
-
----
-
-### **Итог**  
-**Главный тезис**:  
-ProjectOps актуален для команд, где **PM и DevOps вынуждены работать в разрозненных системах**. Его ценность — в автоматизации рутинных процессов и прозрачности CI/CD для нетехнических руководителей.  
-
-**Ключ к успеху**:  
-- Сфокусироваться на MVP с безупречной интеграцией GitLab.  
-- Доказать, что продукт сокращает время на рутину у первых клиентов.  
-- Постепенно добавлять кастомизацию и поддержку новых платформ.  
+### User Roles
+- **Administrator**: Full system access, user management
+- **Project Manager (PM)**: Project creation, team management, deployment control
+- **Lead Developer (Lead)**: Task management, production deployment
+- **Developer**: Task work, time tracking
