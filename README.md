@@ -1,3 +1,5 @@
+> This is my bachelor's thesis project, and I poured countless hours, late nights, and a lot of heart into it. I've since graduated and moved forward, so this repository is now archived. It remains here as a snapshot of my growth as a developer and a reminder of a chapter I'm really proud of ✨
+---
 # ProjectOps - IT Project Management System with CI/CD Automation
 
 ## Project Description
